@@ -1,0 +1,12 @@
+{
+  "name": "brigada-it17-3d",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Jogo educativo IT 17 — Brigada de incêndio, no padrão do jogo NR 23",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node test.mjs && node evacuation.test.mjs && node specifications.test.mjs"
+  },
+  "engines": {"node": ">=18"}
+}

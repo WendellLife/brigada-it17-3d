@@ -1,0 +1,36 @@
+import './choices.test.mjs';
+import assert from 'node:assert/strict';
+import * as r from './dist/rules.mjs';
+const go=(s,id,ctx)=>{const n=r.interact(s,id,ctx);assert.equal(n.step,s.step+1,`Etapa ${id} deve avançar`);return n;};
+const pick=(s,c)=>{const n=r.answer(s,c);assert.equal(n.step,s.step+1,`Escolha ${c} deve avançar`);return n;};
+assert.equal(r.objectives.length,21,'Vinte e uma etapas');
+assert.deepEqual(r.objectives.map(o=>o.id),['smoke','alarm','call','victim','classify','equipment','power','fire','spread','order','assist','door','elevator','exit','meeting','headcount','isolate','report','firefight','release','investigate']);
+let s=r.initialState();
+assert.equal(r.interact(s,'alarm').step,0,'Não pula a identificação');
+s=go(s,'smoke');s=go(s,'alarm');s=pick(s,'full');s=pick(s,'remove');s=pick(s,'C');assert.equal(s.fireClass,'C');
+assert.equal(r.interact(s,'equipment').step,s.step,'Estação exige escolha');
+s=r.selectExtinguisher(s,'co2');assert.equal(r.objectives[s.step].id,'power');assert.equal(s.held,'co2');
+s=go(s,'power');assert.equal(s.power,false);
+s=go(s,'fire');assert.equal(s.fire,'spread','Após o combate o fogo se propaga');assert.equal(s.held,null);
+s=pick(s,'leave');s=go(s,'order');s=go(s,'assist');s=go(s,'door');assert.equal(s.door,'closed');
+s=go(s,'elevator');s=go(s,'exit');s=go(s,'meeting');
+const early=r.interact(s,'headcount',{present:5});assert.equal(early.step,s.step,'Contagem exige todos');assert.match(early.feedback,/5\/6/);
+s=go(s,'headcount',{present:6});s=go(s,'isolate');assert.equal(s.finished,false);
+s=pick(s,'complete');assert.equal(s.finished,false);
+const waiting=r.interact(s,'firefight');assert.equal(waiting.step,s.step,'Combate dos bombeiros só termina com o fogo extinto');
+s=go(s,'firefight',{fireOut:true});assert.equal(s.fire,'out');
+s=pick(s,'wait');s=pick(s,'cause');assert.equal(s.finished,true);assert.equal(s.errors,0);
+// Energia é pré-requisito do combate e água é rejeitada em classe C.
+let f={...r.initialState(),step:r.indexOf('fire'),held:'co2',power:true};
+assert.equal(r.interact(f,'fire').step,f.step);assert.match(r.interact(f,'fire').feedback,/energia/i);
+f={...f,power:false,held:'water'};const wet=r.interact(f,'fire');assert.equal(wet.step,f.step);assert.equal(wet.held,null);assert.equal(wet.errors,1);assert.match(wet.feedback,/água/i);
+for(const a of ['co2','abc'])assert.equal(r.interact({...f,held:a},'fire').step,f.step+1);
+assert.equal(r.interact({...f,held:'k'},'fire').step,f.step,'Classe K não serve para classe C');
+assert.equal(r.currentTarget({...f,held:null}).id,'equipment-station','Sem extintor, o destino é a estação');
+// Evacuar sem combater: mantém alerta, 193 e vítima; pula o combate.
+let e=r.requestEvacuation(r.initialState());assert.equal(e.step,0);e=go(e,'smoke');e=go(e,'alarm');e=pick(e,'full');
+e=r.answer(e,'remove');assert.equal(r.objectives[e.step].id,'order');e=r.interact(e,'order');assert.equal(e.fire,'spread');assert.equal(e.power,true);
+assert.match(r.reportSummary(e),/ainda ligada/);assert.match(r.reportSummary(s),/cortada/);
+let late=r.requestEvacuation({...r.initialState(),step:r.indexOf('power'),held:'abc'});assert.equal(r.objectives[late.step].id,'order');assert.equal(late.held,null);
+assert.equal(r.requestEvacuation({...r.initialState(),step:r.indexOf('door')}).step,r.indexOf('door'),'Depois da ordem, o botão não altera nada');
+console.log('PASS: 21 etapas, decisões, pré-requisitos de energia, agentes para classe C, contagem, combate dos bombeiros, liberação, investigação, evacuação sem combate');
