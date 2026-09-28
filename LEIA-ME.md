@@ -16,7 +16,8 @@ Alternativas: `npm start` (ou `node server.mjs`), ou `python -m http.server 8765
 
 ## Controles
 
-- WASD ou setas: mover. Shift: correr.
+- WASD ou setas: mover (W para cima na tela, D para a direita). Shift: correr.
+- Câmera frontal e alinhada ao galpão, com a planta inteira à vista ao lado do painel da missão.
 - E ou botão AÇÃO: interagir no destino. Em sete etapas, a ação abre uma decisão.
 - Durante a chegada da viatura e o combate dos bombeiros, a câmera acompanha a cena e o jogador aguarda.
 - **Guia:** fichas dos extintores. **IT 17:** procedimentos básicos de emergência.
