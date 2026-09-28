@@ -17,12 +17,12 @@ Alternativas: `npm start` (ou `node server.mjs`), ou `python -m http.server 8765
 ## Controles
 
 - WASD ou setas: mover (W para cima na tela, D para a direita). Shift: correr.
-- Câmera frontal e alinhada ao galpão, com a planta inteira à vista ao lado do painel da missão.
+- Câmera em terceira pessoa, a 45°, logo atrás e acima do brigadista. Paredes e objetos entre a câmera e você (ou o destino) ficam transparentes. Na chegada da viatura e no combate, a câmera se afasta e acompanha os bombeiros.
 - E ou botão AÇÃO: interagir no destino. Em sete etapas, a ação abre uma decisão.
 - Durante a chegada da viatura e o combate dos bombeiros, a câmera acompanha a cena e o jogador aguarda.
 - **Guia:** fichas dos extintores. **IT 17:** procedimentos básicos de emergência.
 - **Evacuar sem combater:** disponível até a ordem de abandono. Mantém alerta, 193 e vítima e pula o combate.
-- Losango verde: você. Losango azul e círculo: destino, centralizado no objeto ou na pessoa com quem você deve interagir. Nas pessoas, o círculo acompanha quem se move. A câmera se aproxima do destino e as peças da parede do fundo ficam transparentes quando a ação está no pátio.
+- Losango verde: você. Losango azul e círculo: destino, centralizado no objeto ou na pessoa com quem você deve interagir. Nas pessoas, o círculo acompanha quem se move.
 
 ## Sequência (21 etapas)
 
