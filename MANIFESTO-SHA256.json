@@ -19,7 +19,7 @@
     "addons/shaders/PoissonDenoiseShader.js": "c95f23ff760ec66474144f7304d2c0a7672e4947188f5fc99af82953ea98ab40",
     "addons/utils/BufferGeometryUtils.js": "31afd27ae8035ab828d67fe0b136c552b2de186634b5abd78e0f69729848c3b5",
     "addons/utils/SkeletonUtils.js": "12fa2b92adcf9bf52b62b724e2a9ae3fab2d4aafa5210ef8584f1b060172300a",
-    "characters.mjs": "72bc95819a7e9fd0cfbdddfbe79962dfe978a01983b39d12440dbee299b8a4e7",
+    "characters.mjs": "c240d5a4ffd427bfb44d533f3c9025177629b6074e98f694212fe3b291f33ada",
     "evacuation.mjs": "fc2b68c33deb77356eb257f375b604650cc7ac1a917e46858a8c5cea794868ff",
     "favicon.svg": "37f9846ccf1fda2ab01491f6b763688fe94a2e2017058e2b3571a3b11e8b6591",
     "game.mjs": "4c3dca796af715e2fc299230ebbafa023b4b6f126bab30eb89b5c7b9ac3a0aa2",

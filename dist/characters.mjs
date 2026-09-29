@@ -7,7 +7,11 @@ import {clone as cloneSkeleton} from './addons/utils/SkeletonUtils.js';
 
 export const CHARACTER_HEIGHT=1.8;
 export async function loadCharacterBase(url){
- const gltf=await new GLTFLoader().loadAsync(url);
+ const loader=new GLTFLoader();let gltf;
+ if(url.startsWith('data:')){// Embedded model (single-file builds): decode in memory, no network request involved.
+  const b=atob(url.slice(url.indexOf(',')+1));const bytes=new Uint8Array(b.length);for(let i=0;i<b.length;i++)bytes[i]=b.charCodeAt(i);
+  gltf=await new Promise((res,rej)=>loader.parse(bytes.buffer,'',res,rej));}
+ else gltf=await loader.loadAsync(url);
  const clips={};for(const c of gltf.animations)clips[c.name.toLowerCase()]=c;
  return {scene:gltf.scene,clips};
 }
