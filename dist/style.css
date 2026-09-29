@@ -14,3 +14,18 @@
 .dialog.choice-dialog{max-width:620px}.choice-dialog h2{font-size:34px;margin:12px 0}.choice-list{clear:both;display:grid;gap:10px;margin:14px 0 4px}.dialog .choice{margin:0;text-align:left;font-weight:600;line-height:1.45;background:#213a47;color:#eef6f9;border:1px solid #6f8b99;padding:14px 16px}.dialog .choice:hover:not(:disabled){border-color:#f4c546;background:#284656}.dialog .choice.wrong{border-color:#e0664f;background:#3a2626;color:#f3c3b8;cursor:not-allowed}.choice-dialog .feedback{min-height:1.6em}
 .procedures{padding-left:0;list-style:none;display:grid;gap:8px}.procedures li{display:grid;gap:2px;background:#20343f;border:1px solid #4f6674;border-left:3px solid #f4c546;border-radius:6px;padding:9px 12px}.procedures b{color:#fff;font-size:14px}.procedures span{color:#c3d3db;font-size:13px;line-height:1.4}
 .inventory button#it-info{color:#8fe3ff}
+
+/* Legibilidade: texto sempre claro (mesmo quando a página herda outra cor base) e quadros translúcidos sobre o mapa. */
+html,body{color:#f5f5f0}
+h1,h2,h3,p,strong,small,span,b,dt,dd,li,kbd,button{color:inherit}
+.brand h1,.mission h2,#action,#action strong,#action small,.controls strong{color:#fff}
+.brand h1 b{color:#ffcc50}
+.panel{background:linear-gradient(125deg,rgba(12,22,30,.58),rgba(18,28,36,.44));border-color:#a9bcc855;backdrop-filter:blur(5px) saturate(1.15);-webkit-backdrop-filter:blur(5px) saturate(1.15);box-shadow:0 6px 22px #0002}
+.panel,.panel *{text-shadow:0 1px 2px rgba(0,0,0,.6)}
+.mission p,.tip p{color:#eef4f7}.controls small,.mission-top{color:#d3dee4}
+.tools button{background:rgba(20,33,42,.55);color:#fff}
+#toast{background:rgba(18,58,45,.72);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+#assembly-status{background:rgba(22,62,50,.66)}
+.dialog.panel{background:rgba(14,24,32,.94)}
+.dialog.panel,.dialog.panel *{text-shadow:none}
+.dialog h2{color:#fff}
