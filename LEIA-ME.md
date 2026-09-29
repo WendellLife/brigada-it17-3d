@@ -46,6 +46,9 @@ Investigar a fumaça → alarme → 193 → vítima → classificar → extintor
 - Texturas geradas no próprio código (concreto, chapas, papelão, grama, asfalto): o download não aumenta.
 - Fogo com chamas brilhantes e faíscas, fumaça volumosa, jatos de água e CO₂ em partículas.
 - Luminárias no teto, luzes de emergência que acendem com o alarme, porta-paletes e entorno com gramado.
+- Ações com objeto: o extintor fica na mão direita e a descarga tem três tempos (retirar o pino, apontar para a base e varrer de um lado para o outro). Alarme, quadro, central de som e porta têm gestos de alcançar e empurrar; contagem com prancheta; isolamento agachado colocando os cones.
+- Texturas com relevo (mapas de normal gerados no código) no concreto, nas chapas, no papelão e no asfalto.
+- Na qualidade Alta, sombras mais suaves. Feixes de luz das luminárias aparecem na fumaça. Os rolos da esteira giram enquanto há energia. Depois do incêndio ficam marcas de fuligem no piso e na parede.
 - Personagens com esqueleto e animações de captura de movimento (parado, andando, correndo), misturadas conforme a velocidade. Ações como segurar o extintor, descarregar, telefonar, tossir, digitar, empurrar, acenar e puxar a mangueira são poses aplicadas sobre a animação. Capacete, colete refletivo e braçadeira são presos aos ossos.
 - O modelo base é `dist/models/Xbot.glb` (personagem Mixamo distribuído com os exemplos do Three.js). Qualquer personagem com esqueleto Mixamo e clipes `idle`, `walk` e `run` pode substituí-lo sem mudar o jogo.
 

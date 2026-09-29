@@ -10,9 +10,9 @@ import {RoomEnvironment} from './addons/environments/RoomEnvironment.js';
 
 // ---------- Quality presets ----------
 export const QUALITY = {
- baixa:{label:'Baixa',pixelRatio:1,shadows:false,shadowSize:512,bloom:false,ao:false},
- media:{label:'Média',pixelRatio:1.5,shadows:true,shadowSize:1024,bloom:true,ao:false},
- alta:{label:'Alta',pixelRatio:2,shadows:true,shadowSize:2048,bloom:true,ao:false}
+ baixa:{label:'Baixa',pixelRatio:1,shadows:false,shadowSize:512,bloom:false,ao:false,soft:false},
+ media:{label:'Média',pixelRatio:1.5,shadows:true,shadowSize:1024,bloom:true,ao:false,soft:false},
+ alta:{label:'Alta',pixelRatio:2,shadows:true,shadowSize:2048,bloom:true,ao:false,soft:true}
 };
 export function defaultQuality(){
  try{const saved=localStorage.getItem('brigada-qualidade');if(QUALITY[saved])return saved;}catch{}
@@ -26,7 +26,7 @@ export function createRenderPipeline(renderer,scene,camera,sun){
   composer?.dispose?.();composer=null;bloom=null;ao=null;
   const q={...QUALITY[level],level};
   renderer.setPixelRatio(Math.min(devicePixelRatio,q.pixelRatio));renderer.setSize(innerWidth,innerHeight);
-  renderer.shadowMap.enabled=q.shadows;sun.castShadow=q.shadows;
+  renderer.shadowMap.enabled=q.shadows;sun.castShadow=q.shadows;renderer.shadowMap.type=T.PCFSoftShadowMap;sun.shadow.radius=q.soft?5:3;
   if(sun.shadow.mapSize.x!==q.shadowSize){sun.shadow.mapSize.set(q.shadowSize,q.shadowSize);sun.shadow.map?.dispose();sun.shadow.map=null;}
   scene.traverse(m=>{if(m.material){const list=Array.isArray(m.material)?m.material:[m.material];list.forEach(x=>x.needsUpdate=true);}});
   if(!q.bloom&&!q.ao)return;
@@ -50,19 +50,23 @@ function canvas(w,h=w){const c=document.createElement('canvas');c.width=w;c.heig
 function rand(seed){let s=seed>>>0;return()=>((s=(s*1664525+1013904223)>>>0)/4294967296);}
 function tex(c,rx=1,ry=1,srgb=true){const t=new T.CanvasTexture(c);t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(rx,ry);t.anisotropy=4;if(srgb)t.colorSpace=T.SRGBColorSpace;return t;}
 function speckle(g,w,h,n,alpha,r,seed){const R=rand(seed);for(let i=0;i<n;i++){const v=Math.floor(R()*255);g.fillStyle=`rgba(${v},${v},${v},${alpha*R()})`;g.fillRect(R()*w,R()*h,r*R()+1,r*R()+1);}}
+// Normal map derived from a texture's brightness (Sobel), so flat surfaces catch the light like real relief.
+function normalFrom(srcCanvas,strength=2.2){const w=srcCanvas.width,h=srcCanvas.height;const g=srcCanvas.getContext('2d');const d=g.getImageData(0,0,w,h).data;const [c,o]=canvas(w,h);const out=o.createImageData(w,h);const L=(x,y)=>{x=(x+w)%w;y=(y+h)%h;const i=(y*w+x)*4;return (d[i]*.299+d[i+1]*.587+d[i+2]*.114)/255;};
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++){const dx=(L(x+1,y-1)+2*L(x+1,y)+L(x+1,y+1))-(L(x-1,y-1)+2*L(x-1,y)+L(x-1,y+1));const dy=(L(x-1,y+1)+2*L(x,y+1)+L(x+1,y+1))-(L(x-1,y-1)+2*L(x,y-1)+L(x+1,y-1));let nx=-dx*strength,ny=-dy*strength,nz=1;const len=Math.hypot(nx,ny,nz);nx/=len;ny/=len;nz/=len;const i=(y*w+x)*4;out.data[i]=(nx*.5+.5)*255;out.data[i+1]=(ny*.5+.5)*255;out.data[i+2]=(nz*.5+.5)*255;out.data[i+3]=255;}
+ o.putImageData(out,0,0);const t=new T.CanvasTexture(c);t.wrapS=t.wrapT=T.RepeatWrapping;return t;}
 export function makeTextures(){
  const out={};
  // Polished concrete slab with saw-cut joints and faint wear.
- {const [c,g]=canvas(512);g.fillStyle='#b9bebb';g.fillRect(0,0,512,512);speckle(g,512,512,9000,.18,2,7);const R=rand(3);for(let i=0;i<14;i++){const x=R()*512,y=R()*512,r=30+R()*90;const gr=g.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,'rgba(90,96,98,.10)');gr.addColorStop(1,'rgba(90,96,98,0)');g.fillStyle=gr;g.fillRect(x-r,y-r,r*2,r*2);}g.strokeStyle='rgba(70,76,78,.55)';g.lineWidth=2;for(let i=0;i<=512;i+=256){g.beginPath();g.moveTo(i,0);g.lineTo(i,512);g.stroke();g.beginPath();g.moveTo(0,i);g.lineTo(512,i);g.stroke();}out.concrete=tex(c,9,6);}
+ {const [c,g]=canvas(512);g.fillStyle='#b9bebb';g.fillRect(0,0,512,512);speckle(g,512,512,9000,.18,2,7);const R=rand(3);for(let i=0;i<14;i++){const x=R()*512,y=R()*512,r=30+R()*90;const gr=g.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,'rgba(90,96,98,.10)');gr.addColorStop(1,'rgba(90,96,98,0)');g.fillStyle=gr;g.fillRect(x-r,y-r,r*2,r*2);}g.strokeStyle='rgba(70,76,78,.55)';g.lineWidth=2;for(let i=0;i<=512;i+=256){g.beginPath();g.moveTo(i,0);g.lineTo(i,512);g.stroke();g.beginPath();g.moveTo(0,i);g.lineTo(512,i);g.stroke();}out.concrete=tex(c,9,6);out.concreteN=normalFrom(c,1.6);out.concreteN.repeat.copy(out.concrete.repeat);}
  // Corrugated metal wall cladding.
- {const [c,g]=canvas(256);const gr=g.createLinearGradient(0,0,32,0);gr.addColorStop(0,'#c2c6c2');gr.addColorStop(.5,'#9ea3a0');gr.addColorStop(1,'#c2c6c2');g.fillStyle=gr;for(let x=0;x<256;x+=32){g.save();g.translate(x,0);g.fillRect(0,0,32,256);g.restore();}speckle(g,256,256,1600,.1,2,11);g.fillStyle='rgba(60,64,62,.35)';g.fillRect(0,126,256,3);out.wall=tex(c,3,1);}
+ {const [c,g]=canvas(256);const gr=g.createLinearGradient(0,0,32,0);gr.addColorStop(0,'#c2c6c2');gr.addColorStop(.5,'#9ea3a0');gr.addColorStop(1,'#c2c6c2');g.fillStyle=gr;for(let x=0;x<256;x+=32){g.save();g.translate(x,0);g.fillRect(0,0,32,256);g.restore();}speckle(g,256,256,1600,.1,2,11);g.fillStyle='rgba(60,64,62,.35)';g.fillRect(0,126,256,3);out.wall=tex(c,3,1);out.wallN=normalFrom(c,3);out.wallN.repeat.copy(out.wall.repeat);}
  // Brushed / painted steel.
  {const [c,g]=canvas(256);g.fillStyle='#8f989c';g.fillRect(0,0,256,256);const R=rand(5);for(let i=0;i<500;i++){const y=R()*256;g.strokeStyle=`rgba(${R()<.5?255:30},${R()<.5?255:30},${R()<.5?255:30},.05)`;g.beginPath();g.moveTo(0,y);g.lineTo(256,y+R()*4-2);g.stroke();}out.metal=tex(c,1,1);}
  // Cardboard with packing tape.
- {const [c,g]=canvas(256);g.fillStyle='#c19a63';g.fillRect(0,0,256,256);speckle(g,256,256,2500,.12,2,19);g.fillStyle='rgba(120,86,44,.25)';for(let y=0;y<256;y+=6)g.fillRect(0,y,256,1);g.fillStyle='rgba(222,196,140,.85)';g.fillRect(108,0,40,256);g.fillStyle='rgba(60,40,20,.55)';g.font='bold 22px Arial';g.fillText('▲▲',20,60);g.fillText('FRÁGIL',150,220);out.cardboard=tex(c,1,1);}
+ {const [c,g]=canvas(256);g.fillStyle='#c19a63';g.fillRect(0,0,256,256);speckle(g,256,256,2500,.12,2,19);g.fillStyle='rgba(120,86,44,.25)';for(let y=0;y<256;y+=6)g.fillRect(0,y,256,1);g.fillStyle='rgba(222,196,140,.85)';g.fillRect(108,0,40,256);g.fillStyle='rgba(60,40,20,.55)';g.font='bold 22px Arial';g.fillText('▲▲',20,60);g.fillText('FRÁGIL',150,220);out.cardboard=tex(c,1,1);out.cardboardN=normalFrom(c,1.4);}
  // Grass and asphalt for the surroundings.
  {const [c,g]=canvas(256);g.fillStyle='#5f7f4c';g.fillRect(0,0,256,256);const R=rand(23);for(let i=0;i<5000;i++){const v=R();g.fillStyle=v<.5?`rgba(40,70,30,${.3*R()})`:`rgba(150,190,110,${.25*R()})`;g.fillRect(R()*256,R()*256,1,2+R()*3);}out.grass=tex(c,40,40);}
- {const [c,g]=canvas(256);g.fillStyle='#3f4549';g.fillRect(0,0,256,256);speckle(g,256,256,7000,.22,2,31);out.asphalt=tex(c,2,14);}
+ {const [c,g]=canvas(256);g.fillStyle='#3f4549';g.fillRect(0,0,256,256);speckle(g,256,256,7000,.22,2,31);out.asphalt=tex(c,2,14);out.asphaltN=normalFrom(c,1.2);out.asphaltN.repeat.copy(out.asphalt.repeat);}
  return out;
 }
 // Round, soft-edged sprite textures for particles.

@@ -34,6 +34,9 @@ export const POSES={
  hose:{RightArm:[0,30,-20],RightForeArm:[0,45,0],LeftArm:[0,-15,20],LeftForeArm:[0,-15,0]},
  point:{RightArm:[0,85,0],RightForeArm:[0,5,0]},
  victim:{RightUpLeg:[-85,0,-6],LeftUpLeg:[-85,0,6],RightLeg:[85,0,0],LeftLeg:[85,0,0],Spine1:[24,0,0],Head:[12,0,0],RightArm:[0,45,-10],RightForeArm:[0,120,0],LeftArm:[0,-20,5],LeftForeArm:[0,-40,0]},
+ pin:{RightArm:[0,30,-10],RightForeArm:[0,80,0],LeftArm:[0,-30,15],LeftForeArm:[0,-105,0],Spine1:[10,0,0],Head:[18,0,0]},
+ aim:{RightArm:[0,55,-10],RightForeArm:[0,40,0],LeftArm:[0,-70,10],LeftForeArm:[0,-35,0],Spine1:[12,0,0],RightUpLeg:[-25,0,-4],LeftUpLeg:[-25,0,4],RightLeg:[40,0,0],LeftLeg:[40,0,0]},
+ cones:{RightUpLeg:[-70,0,-8],LeftUpLeg:[-70,0,8],RightLeg:[100,0,0],LeftLeg:[100,0,0],Spine1:[30,0,0],RightArm:[0,70,-5],RightForeArm:[0,15,0],LeftArm:[0,-70,5],LeftForeArm:[0,-15,0]},
  crouch:{RightUpLeg:[-60,0,-8],LeftUpLeg:[-60,0,8],RightLeg:[95,0,0],LeftLeg:[95,0,0],Spine1:[18,0,0]}
 };
 const BONES=['Hips','Spine','Spine1','Spine2','Neck','Head','RightArm','RightForeArm','RightHand','LeftArm','LeftForeArm','LeftHand','RightUpLeg','RightLeg','RightFoot','LeftUpLeg','LeftLeg','LeftFoot'];
@@ -59,18 +62,19 @@ export function createCharacter(base,opts={}){
   setPose(name){if(name===st.pose)return;st.prevPose=st.pose;st.pose=name;st.poseW=0;},
   // speed in m/s; the walk/run clips are retimed to match the stride to the ground.
   update(dt,speed=0,extra={}){st.speed+=(speed-st.speed)*Math.min(1,dt*8);const s=st.speed;
-   const wRun=T.MathUtils.clamp((s-2.2)/1.3,0,1),wWalk=T.MathUtils.clamp(s/.6,0,1)*(1-wRun),wIdle=1-Math.max(wWalk,wRun);
-   if(actions.idle)actions.idle.setEffectiveWeight(wIdle);if(actions.walk){actions.walk.setEffectiveWeight(wWalk);actions.walk.setEffectiveTimeScale(Math.max(.6,s/1.35));}if(actions.run){actions.run.setEffectiveWeight(wRun);actions.run.setEffectiveTimeScale(Math.max(.8,s/3.4));}
+   const wRun=T.MathUtils.clamp((s-2.6)/1.2,0,1),wWalk=T.MathUtils.clamp(s/.6,0,1)*(1-wRun),wIdle=1-Math.max(wWalk,wRun);
+   if(actions.idle)actions.idle.setEffectiveWeight(wIdle);if(actions.walk){actions.walk.setEffectiveWeight(wWalk);actions.walk.setEffectiveTimeScale(T.MathUtils.clamp(s/1.5,.6,1.8));}if(actions.run){actions.run.setEffectiveWeight(wRun);actions.run.setEffectiveTimeScale(Math.max(.8,s/3.4));}
    mixer.update(dt);st.time+=dt;
    // Pose overlay with cross-fade from the previous pose.
    st.poseW=Math.min(1,st.poseW+dt*4);if(st.poseW<1)applyPose(st.prevPose,1-st.poseW);applyPose(st.pose,st.poseW);
    if(extra.bob&&(st.pose==='cough'||st.pose==='victim')){_e.set(Math.max(0,Math.sin(st.time*5))*.22,0,0);_q.setFromEuler(_e);bones.Spine1?.quaternion.multiply(_q);}
+   if(extra.sweep){_e.set(0,extra.sweep,0);_q.setFromEuler(_e);bones.Spine1?.quaternion.multiply(_q);}
    if(extra.wave){_e.set(0,Math.sin(st.time*6)*.35,0);_q.setFromEuler(_e);bones.RightForeArm?.quaternion.multiply(_q);}
    if(extra.work){const k=Math.sin(st.time*(extra.work===2?7:3))*.18;_e.set(0,k,0);_q.setFromEuler(_e);bones.RightForeArm?.quaternion.multiply(_q);_e.set(0,-k,0);_q.setFromEuler(_e);bones.LeftForeArm?.quaternion.multiply(_q);}
    // Head turns toward a point of interest (world x/z), within a comfortable range.
    if(extra.lookAt&&bones.Head){const a=Math.atan2(extra.lookAt.x-group.position.x,extra.lookAt.z-group.position.z)-group.rotation.y;const rel=Math.atan2(Math.sin(a),Math.cos(a));const yaw=T.MathUtils.clamp(rel,-1.1,1.1)*.7;_e.set(0,yaw,0);_q.setFromEuler(_e);bones.Head.quaternion.multiply(_q);}
    // Seated poses drop the pelvis so the character sits at chair height.
-   const drop={seated:-.5,victim:-.5,wheel:-.3,crouch:-.25}[st.pose]||0;model.position.y+=((drop*st.poseW+({seated:-.5,victim:-.5,wheel:-.3,crouch:-.25}[st.prevPose]||0)*(1-st.poseW))-model.position.y)*Math.min(1,dt*6);
+   const DROP={seated:-.5,victim:-.5,wheel:-.3,crouch:-.25,aim:-.12,cones:-.32};const drop=DROP[st.pose]||0;model.position.y+=((drop*st.poseW+(DROP[st.prevPose]||0)*(1-st.poseW))-model.position.y)*Math.min(1,dt*6);
    // Lean into turns and acceleration for a more natural gait.
    const targetLean=extra.turn?T.MathUtils.clamp(-extra.turn*.35,-.12,.12):0;st.lean+=(targetLean-st.lean)*Math.min(1,dt*6);model.rotation.z=st.lean;}
  };
