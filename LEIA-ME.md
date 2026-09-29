@@ -46,7 +46,8 @@ Investigar a fumaça → alarme → 193 → vítima → classificar → extintor
 - Texturas geradas no próprio código (concreto, chapas, papelão, grama, asfalto): o download não aumenta.
 - Fogo com chamas brilhantes e faíscas, fumaça volumosa, jatos de água e CO₂ em partículas.
 - Luminárias no teto, luzes de emergência que acendem com o alarme, porta-paletes e entorno com gramado.
-- Personagens com formas arredondadas, rosto, capacete com aba, colete refletivo, cinto, luvas e botas.
+- Personagens com esqueleto e animações de captura de movimento (parado, andando, correndo), misturadas conforme a velocidade. Ações como segurar o extintor, descarregar, telefonar, tossir, digitar, empurrar, acenar e puxar a mangueira são poses aplicadas sobre a animação. Capacete, colete refletivo e braçadeira são presos aos ossos.
+- O modelo base é `dist/models/Xbot.glb` (personagem Mixamo distribuído com os exemplos do Three.js). Qualquer personagem com esqueleto Mixamo e clipes `idle`, `walk` e `run` pode substituí-lo sem mudar o jogo.
 
 ## Arquivos
 
@@ -56,6 +57,8 @@ Investigar a fumaça → alarme → 193 → vítima → classificar → extintor
 - `dist/index.html` e `dist/style.css`: interface. O CSS é o do NR 23, com acréscimos no final.
 - `dist/three.module.js`: Three.js 0.170.0, incluída localmente.
 - `dist/graphics.mjs`: qualidade gráfica, pós-processamento, texturas e partículas.
+- `dist/characters.mjs`: personagens com esqueleto, mistura de animações e poses de ação.
+- `dist/models/Xbot.glb`: modelo base dos personagens (2,9 MB).
 - `dist/addons/`: módulos oficiais do Three.js 0.170.0 (pós-processamento e ambiente), mesma licença MIT.
 - `*.test.mjs` e `test.mjs`: testes.
 - `IT17-COMPARATIVO.md` e `SAFETY-NOTES.md`: base normativa e decisões didáticas.

@@ -26,3 +26,5 @@ Decisões a validar com o plano de emergência da empresa:
 - **Ponto de encontro:** representa o local seguro. Na vida real, fica a no mínimo 100 m do sinistro.
 
 A simulação não certifica competência nem substitui o treinamento prático previsto na IT 17.
+
+Modelo dos personagens: `Xbot.glb`, personagem Mixamo (Adobe) incluído nos exemplos oficiais do Three.js, usado conforme a licença do Mixamo para conteúdo de aplicações. Animações idle, walk e run do mesmo arquivo.

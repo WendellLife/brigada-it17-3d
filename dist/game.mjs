@@ -1,11 +1,13 @@
 import * as T from './three.module.js';
 import {findRoute,workerPhase} from './evacuation.mjs';
+import {loadCharacterBase,createCharacter} from './characters.mjs';
 import {createRenderPipeline,defaultQuality,QUALITY,makeTextures,createFire,animateFireFx,makeSmokeSprite,makeSpraySprite,glowSprite} from './graphics.mjs';
 import {objectives,initialState,interact,answer,canMove,currentTarget,selectExtinguisher,requestEvacuation,agents,indexOf,reportSummary,team} from './rules.mjs';
 const $=id=>document.getElementById(id);
 let renderer;
 try{renderer=new T.WebGLRenderer({antialias:true,powerPreference:'high-performance'});}catch(e){$('loading').textContent='Não foi possível iniciar o 3D. Ative a aceleração gráfica do navegador e recarregue.';throw e;}
-renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=.95;$('game').appendChild(renderer.domElement);$('loading').remove();
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=.95;$('game').appendChild(renderer.domElement);$('loading').textContent='Carregando personagens…';
+let charBase;try{charBase=await loadCharacterBase('models/Xbot.glb');}catch(e){$('loading').textContent='Não foi possível carregar os personagens (models/Xbot.glb). Verifique se a pasta models foi publicada.';throw e;}$('loading').remove();
 const scene=new T.Scene();scene.background=new T.Color('#9fb3bf');scene.fog=new T.Fog('#9fb3bf',38,90);
 // Third-person camera at 45°, just behind and above the brigade member.
 const camera=new T.PerspectiveCamera(52,innerWidth/innerHeight,.1,200);const look=new T.Vector3(-2.5,0,-1);const camOffset=new T.Vector3(0,10.8,10.8);let camDist=1;
@@ -131,27 +133,13 @@ function updateSeeThrough(dt,points){if(++fadeTick%3===0){const hits=new Set();f
  for(const [m,f] of faded){f.o+=((f.hit?.22:1)-f.o)*Math.min(1,dt*8);m.material.opacity=f.o;m.material.depthWrite=f.o>.95;}}
 // Player: stylized brigade member with articulated limbs, vest and helmet.
 const player=new T.Group();scene.add(player);player.position.set(-2.5,0,-1);
-// Rounded character rig. Colors are keys used to recolor workers and firefighters.
-function cap(r,len,c,x,y,z,parent,sx=1,sz=1){const m=new T.Mesh(new T.CapsuleGeometry(r,len,6,14),typeof c==='object'?c:mat(c));m.position.set(x,y,z);m.scale.set(sx,1,sz);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;}
-function band(r,h,c,y,parent,sz=.78){const m=new T.Mesh(new T.CylinderGeometry(r,r,h,20,1,true),mat(c,.1,.35));m.material.side=T.DoubleSide;m.position.y=y;m.scale.z=sz;parent.add(m);return m;}
-const body=new T.Group();player.add(body);
-cap(.21,.34,'#3b5870',0,1.07,0,body,1,.72);cap(.225,.3,'#ec792d',0,1.08,0,body,1.02,.8);band(.232,.05,'#e1e4cb',.98,body,.8);band(.232,.05,'#e1e4cb',1.18,body,.8);for(const x of [-.1,.1])box(.045,.42,.03,'#e4e7d6',x,1.1,.18,body);
-cyl(.2,.2,.07,'#1f262b',0,.83,0,body);box(.09,.07,.02,'#c9b36b',0,.83,.16,body);
-cyl(.075,.085,.12,'#c8936a',0,1.44,0,body);
-const head=sphere(.2,'#d7a274',0,1.63,0,body);head.scale.set(1,1.1,1);
-sphere(.205,'#2b2420',0,1.66,-.035,body).scale.set(1,1.02,.92);
-for(const x of [-.075,.075]){sphere(.034,'#f4f1ea',x,1.66,.182,body).scale.z=.5;sphere(.018,'#1f2a33',x,1.66,.198,body);box(.06,.014,.02,'#3a2a20',x,1.715,.18,body);}
-sphere(.033,'#c98f63',0,1.61,.2,body);box(.07,.012,.02,'#8f4f3b',0,1.55,.185,body);for(const x of [-.2,.2])sphere(.04,'#c8936a',x,1.63,0,body);
-{const hel=new T.Mesh(new T.SphereGeometry(.235,24,12,0,Math.PI*2,0,Math.PI/2),mat('#e8aa21',.1,.35));hel.position.set(0,1.72,0);hel.scale.set(1,.95,1.05);hel.castShadow=true;body.add(hel);}
-cyl(.27,.27,.03,'#ffc33d',0,1.73,.03,body,24);box(.04,.08,.4,'#ffd45d',0,1.93,0,body);
-const limbs=[];for(const side of [-1,1]){const arm=new T.Group();arm.position.set(side*.29,1.3,0);body.add(arm);cap(.075,.22,'#293e54',0,-.16,0,arm);cap(.068,.2,'#293e54',0,-.38,.02,arm);sphere(.075,'#533e29',0,-.53,.03,arm);limbs.push(arm);}
-for(const side of [-1,1]){const leg=new T.Group();leg.position.set(side*.11,.8,0);player.add(leg);cap(.092,.46,'#2c4156',0,-.33,0,leg);{const boot=cap(.09,.14,'#493b2c',0,-.7,.06,leg,1.05,1);boot.rotation.x=Math.PI/2;}limbs.push(leg);}
-// Brigade armband (IT 17: identification during emergencies) — player only.
-const armband=band(.082,.08,'#d7321f',-.12,limbs[1],1);
+// Skeletal brigade member: mocap idle/walk/run, helmet, vest and the IT 17 armband.
+const playerChar=createCharacter(charBase,{surface:'#3b5870',joints:'#22282d',helmet:'#e8aa21',vest:'#ec792d',armband:'#d7321f'});player.add(playerChar.group);
+const body=new T.Group();player.add(body);const limbs=[0,1,2,3].map(()=>new T.Group());let playerMove={speed:0,turn:0};
 function navigationDiamond(color){const g=new T.Group();const mesh=new T.Mesh(new T.OctahedronGeometry(.32,0),new T.MeshStandardMaterial({color,emissive:color,emissiveIntensity:.65,flatShading:true,roughness:.28,toneMapped:false,depthTest:false}));mesh.scale.set(.82,1.65,.82);mesh.renderOrder=20;g.add(mesh);const outline=new T.LineSegments(new T.EdgesGeometry(mesh.geometry),new T.LineBasicMaterial({color:'#12322d',transparent:true,opacity:.7,depthTest:false}));outline.scale.copy(mesh.scale);outline.renderOrder=21;g.add(outline);return g;}
 const ring=new T.Mesh(new T.RingGeometry(.44,.56,64),new T.MeshBasicMaterial({color:'#6fff59',side:T.DoubleSide,toneMapped:false,depthTest:false}));ring.rotation.x=-Math.PI/2;ring.position.y=.055;ring.renderOrder=10;ring.visible=false;player.add(ring);
 const playerDiamond=navigationDiamond('#66ff38');playerDiamond.scale.setScalar(.55);playerDiamond.position.y=2.3;player.add(playerDiamond);
-const carried=new T.Group();player.add(carried);cyl(.12,.12,.46,'#ca3024',.37,.75,.27,carried);box(.17,.035,.07,'#26323a',.37,1.02,.27,carried);const carriedLabel=box(.18,.15,.015,'#ece6d1',.37,.78,.395,carried);carried.visible=false;
+const carried=new T.Group();player.add(carried);cyl(.11,.11,.44,'#ca3024',-.3,.72,.3,carried);box(.16,.035,.07,'#26323a',-.3,.97,.3,carried);const carriedLabel=box(.17,.14,.015,'#ece6d1',-.3,.75,.41,carried);carried.visible=false;
 const marker=new T.Group();scene.add(marker);const diamond=navigationDiamond('#25ddff');marker.add(diamond);
 const targetRing=new T.Group();scene.add(targetRing);
 function navigationRing(inner,outer,color,order){const r=new T.Mesh(new T.RingGeometry(inner,outer,64),new T.MeshBasicMaterial({color,side:T.DoubleSide,transparent:true,opacity:1,toneMapped:false,depthTest:false,depthWrite:false}));r.rotation.x=-Math.PI/2;r.renderOrder=order;targetRing.add(r);return r;}
@@ -169,61 +157,60 @@ const workerJobs=[
  {name:'Diego',role:'Manutenção',task:'Ajustando bancada',x:7.5,z:-2.55,angle:Math.PI,kind:'repair',phaseRole:'other'},
  {name:'Bruno',role:'Logística',task:'Organizando volumes',x:-2.9,z:2.4,angle:-Math.PI/2,kind:'carry',phaseRole:'elevator'}
 ];
-const firefighterRig=player.clone(true);
-const workers=workerJobs.map((job,i)=>{const rig=player.clone(true);rig.remove(...rig.children.slice(3));rig.position.set(job.x,0,job.z);rig.rotation.y=job.angle;rig.traverse(m=>{if(m.isMesh){m.material=m.material.clone();const hex=m.material.color?.getHexString();if(hex==='ec792d')m.material.color.set(i%2?'#b9d044':'#ed8b32');if(hex==='d7321f')m.visible=false;}});scene.add(rig);
- const prop=new T.Group();rig.add(prop);if(['record'].includes(job.kind)){box(.37,.045,.4,'#dedbc4',0,1.05,.42,prop);}if(job.kind==='carry')box(.53,.43,.46,'#b99462',0,.99,.47,prop);if(job.kind==='repair'){rod([.32,.8,.32],[.32,1.24,.45],.025,'#b9c6c8',prop);}
- if(job.kind==='wheelchair'){const chair=new T.Group();rig.add(chair);box(.58,.06,.52,'#2f3a40',0,.7,0,chair,.4);box(.58,.5,.06,'#2f3a40',0,1,-.25,chair,.4);box(.5,.05,.2,'#2f3a40',0,.22,.52,chair,.4);for(const x of [-.35,.35]){const w=new T.Mesh(new T.TorusGeometry(.36,.035,8,24),mat('#1d2427',.5));w.position.set(x,.38,-.05);w.rotation.y=Math.PI/2;chair.add(w);rod([x,.7,.2],[x*.9,.22,.5],.025,'#8c979c',chair);}for(const x of [-.25,.25])sphere(.07,'#1d2427',x,.07,.45,chair);rod([-.27,1.25,-.3],[-.27,1.25,-.45],.025,'#1d2427',chair);rod([.27,1.25,-.3],[.27,1.25,-.45],.025,'#1d2427',chair);}
- const labelCanvas=document.createElement('canvas');labelCanvas.width=512;labelCanvas.height=112;const tex=new T.CanvasTexture(labelCanvas);tex.colorSpace=T.SRGBColorSpace;const label=new T.Sprite(new T.SpriteMaterial({map:tex,depthTest:false}));label.scale.set(2.6,.57,1);label.position.set(0,2.45,0);rig.add(label);
- return {rig,job,prop,label,labelCanvas,tex,labelText:'',start:{x:job.x,z:job.z},phase:null,route:[],stride:i,speed:job.kind==='victim'?1.9:job.kind==='wheelchair'?2.6:2.55+i*.09,arrived:false,limbs:[...rig.children[0].children.filter(c=>c.isGroup),rig.children[1],rig.children[2]]};});
+const workerLooks=[{surface:'#4a5560',vest:'#ed8b32'},{surface:'#55606b',vest:'#b9d044'},{surface:'#4a5560',vest:'#ed8b32'},{surface:'#3f4a55',vest:'#b9d044'},{surface:'#55606b',vest:'#ed8b32'},{surface:'#4a5560',vest:'#b9d044'}];
+const workers=workerJobs.map((job,i)=>{const rig=new T.Group();rig.position.set(job.x,0,job.z);rig.rotation.y=job.angle;scene.add(rig);const char=createCharacter(charBase,{...workerLooks[i],joints:'#22282d',helmet:job.kind==='record'?null:'#e8aa21'});rig.add(char.group);
+ const prop=new T.Group();rig.add(prop);if(job.kind==='record'){box(.34,.04,.28,'#dedbc4',0,1.12,.36,prop);}if(job.kind==='carry')box(.5,.4,.42,'#b99462',0,1.02,.4,prop);if(job.kind==='repair'){rod([.3,.9,.3],[.3,1.2,.42],.022,'#b9c6c8',prop);}
+ let wheels=[];if(job.kind==='wheelchair'){const chair=new T.Group();rig.add(chair);box(.58,.06,.52,'#2f3a40',0,.66,0,chair,.4);box(.58,.5,.06,'#2f3a40',0,.95,-.27,chair,.4);box(.5,.05,.2,'#2f3a40',0,.2,.5,chair,.4);for(const x of [-.35,.35]){const w=new T.Mesh(new T.TorusGeometry(.36,.035,8,24),mat('#1d2427',.5));w.position.set(x,.38,-.05);w.rotation.y=Math.PI/2;chair.add(w);wheels.push(w);const rim=new T.Mesh(new T.TorusGeometry(.3,.02,6,20),mat('#8c979c',.5));rim.position.copy(w.position);rim.rotation.y=Math.PI/2;chair.add(rim);rod([x,.66,.2],[x*.9,.2,.5],.025,'#8c979c',chair);}for(const x of [-.25,.25])sphere(.07,'#1d2427',x,.07,.45,chair);for(const x of [-.27,.27])rod([x,1.2,-.3],[x,1.2,-.45],.025,'#1d2427',chair);}
+ const labelCanvas=document.createElement('canvas');labelCanvas.width=512;labelCanvas.height=112;const tex=new T.CanvasTexture(labelCanvas);tex.colorSpace=T.SRGBColorSpace;const label=new T.Sprite(new T.SpriteMaterial({map:tex,depthTest:false}));label.scale.set(2.6,.57,1);label.position.set(0,2.2,0);rig.add(label);
+ return {rig,char,wheels,job,prop,label,labelCanvas,tex,labelText:'',start:{x:job.x,z:job.z},phase:null,route:[],stride:i,speed:job.kind==='victim'?1.9:job.kind==='wheelchair'?2.6:2.55+i*.09,arrived:false,limbs:[]};});
 function setLabel(w,sub,color='#f5d777',bg='#142c39e8'){const text=sub+color;if(w.labelText===text)return;w.labelText=text;const c=w.labelCanvas.getContext('2d');c.clearRect(0,0,512,112);c.fillStyle=bg;c.fillRect(0,0,512,112);c.textAlign='center';c.fillStyle=color;c.font='bold 33px Arial';c.fillText(w.job.name+' · '+w.job.role,256,44);c.fillStyle='#ffffff';c.font='25px Arial';c.fillText(sub,256,84);w.tex.needsUpdate=true;}
 const eva=workers.find(w=>w.job.kind==='wheelchair'),carla=workers.find(w=>w.job.kind==='victim'),bruno=workers.find(w=>w.job.phaseRole==='elevator');
 // Firefighter who receives the report.
-firefighterRig.remove(...firefighterRig.children.slice(3));firefighterRig.traverse(m=>{if(m.isMesh){m.material=m.material.clone();const hex=m.material.color.getHexString();if(hex==='ec792d'||hex==='293e54'||hex==='2c4156')m.material.color.set('#3a3f45');if(hex==='e1e4cb'||hex==='e4e7d6')m.material.color.set('#f5c948');if(hex==='e8aa21'||hex==='ffc33d'||hex==='ffd45d')m.material.color.set('#c3261c');if(hex==='d7321f')m.visible=false;}});
-const firefighters=[0,1,2].map(i=>{const rig=firefighterRig.clone(true);rig.traverse(m=>{if(m.isMesh){m.material=m.material.clone();if(i===0&&m.material.color.getHexString()==='c3261c')m.material.color.set('#f2f2ec');}});rig.visible=false;scene.add(rig);
- const prop=new T.Group();rig.add(prop);prop.visible=false;if(i===1){rod([.3,1.05,.25],[.3,1.05,.75],.05,'#b8862b',prop);rod([.3,1.05,.75],[.3,1.05,.95],.035,'#d9d9d0',prop);rod([.3,1.05,.25],[.1,.3,-.1],.045,'#e7c25a',prop);}if(i===2){const c=new T.Mesh(new T.TorusGeometry(.26,.08,8,16),mat('#e7c25a'));c.position.set(-.34,1.25,0);c.rotation.y=Math.PI/2;prop.add(c);}if(i===0){box(.08,.22,.05,'#1d2427',.33,1.05,.2,prop);}
- return {rig,prop,route:[],plan:[],speed:3.2,stride:i,limbs:[...rig.children[0].children.filter(c=>c.isGroup),rig.children[1],rig.children[2]]};});
+const firefighters=[0,1,2].map(i=>{const rig=new T.Group();rig.visible=false;scene.add(rig);const char=createCharacter(charBase,{surface:'#3a3f45',joints:'#c3261c',helmet:i===0?'#f2f2ec':'#c3261c',vest:'#2f343a',stripes:'#f5c948'});rig.add(char.group);
+ const prop=new T.Group();rig.add(prop);prop.visible=false;if(i===1){rod([-.25,1.05,.3],[-.25,1.05,.8],.05,'#b8862b',prop);rod([-.25,1.05,.8],[-.25,1.05,1],.035,'#d9d9d0',prop);rod([-.25,1.05,.3],[-.05,.3,-.1],.045,'#e7c25a',prop);}if(i===2){const c=new T.Mesh(new T.TorusGeometry(.26,.08,8,16),mat('#e7c25a'));c.position.set(.34,1.05,.1);c.rotation.y=Math.PI/2;prop.add(c);}if(i===0){box(.08,.22,.05,'#1d2427',-.3,1.05,.25,prop);}
+ return {rig,char,prop,route:[],plan:[],speed:3.2,stride:i,limbs:[],poseOverride:null};});
 const commander=firefighters[0],crew=firefighters.slice(1);
 const ff={phase:'idle',t:0,cmdReady:false,staged:[false,false],hoseOpen:0,barrierOpen:false,barrierPassed:false,doorOpening:false,doorOpen:false,sprayReady:[false,false],hoseLaying:false,hoseLast:null,sprayT:0};let fireLevel=1,smokeLevel=1;
 const fireSpots=[{x:4.2,z:3.1},{x:4.2,z:4.9}],commanderSpot={x:-10.3,z:-9.1};
 const ffObstacles=()=>obstacles.filter(o=>o!==truckBarrier&&(o!==sectorDoor||ff.doorOpen)&&(o!==isolationBarrier||ff.barrierOpen));
 const slots=workers.map((w,i)=>({x:-8.35+(i%3)*.75,z:-10.8+Math.floor(i/3)*.85}));
 const threshold={x:-7.6,z:-7.35};
-function resetWorkers(){workers.forEach(w=>{w.rig.position.set(w.start.x,0,w.start.z);w.rig.rotation.y=w.job.angle;w.phase=null;w.route=[];w.arrived=false;w.prop.visible=true;w.limbs.forEach(l=>l.rotation.x=0);});}
+function resetWorkers(){workers.forEach(w=>{w.rig.position.set(w.start.x,0,w.start.z);w.rig.rotation.y=w.job.angle;w.phase=null;w.route=[];w.arrived=false;w.prop.visible=true;w.char.setPose('none');});}
 function evacuationRoute(w,i){const p=w.rig.position;const outside=p.z<-6.6;return outside?findRoute(p,slots[i],obstacles):[...findRoute(p,threshold,obstacles),...findRoute(threshold,slots[i],obstacles)];}
 function walkAlong(w,dt){let budget=w.speed*dt,moving=false;while(budget>0&&w.route.length){const p=w.route[0],dx=p.x-w.rig.position.x,dz=p.z-w.rig.position.z,d=Math.hypot(dx,dz);if(d<.01){w.route.shift();continue;}const advance=Math.min(budget,d);w.rig.position.x+=dx/d*advance;w.rig.position.z+=dz/d*advance;budget-=advance;const angle=Math.atan2(dx,dz);w.rig.rotation.y+=Math.atan2(Math.sin(angle-w.rig.rotation.y),Math.cos(angle-w.rig.rotation.y))*.25;moving=true;if(advance===d)w.route.shift();}return moving;}
-function poseLegs(w,seated){if(w.job.kind==='wheelchair'){w.limbs[2].rotation.x=w.limbs[3].rotation.x=-Math.PI/2;w.rig.position.y=0;return;}if(seated){w.limbs[2].rotation.x=w.limbs[3].rotation.x=-Math.PI/2;w.rig.position.y=-.5;}}
+const workPose={operate:'push',victim:'inspect',wheelchair:'wheel',record:'type',repair:'repair',carry:'carry'};
 function updateWorkers(dt){workers.forEach((w,i)=>{const phase=workerPhase(w.job.phaseRole,state);
- if(w.phase!==phase){w.phase=phase;w.arrived=false;w.prop.visible=phase==='working'||phase==='phone';w.route=[];w.rig.position.y=0;w.limbs.forEach(l=>l.rotation.x=0);
+ if(w.phase!==phase){w.phase=phase;w.arrived=false;w.prop.visible=phase==='working'||phase==='phone';w.route=[];
   if(phase==='evacuate')w.route=evacuationRoute(w,i);
   if(phase==='elevator')w.route=findRoute(w.rig.position,{x:-.6,z:-4.85},obstacles);}
  const labels={working:[w.job.task],victim:['Tossindo · precisa de ajuda','#ffb38a'],alert:['Aguardando orientação da brigada','#ffe07a'],waitHelp:['Precisa de auxílio para sair','#ffb38a'],escort:['Acompanhando você','#9ef0c0'],phone:['Ligando para o 193','#9fd8ff'],elevator:['Indo para o elevador!','#ff8f7a'],evacuate:[w.arrived?'No ponto de encontro':'Seguindo a rota de fuga','#9ef0c0']};
  setLabel(w,...labels[phase]);w.label.visible=!(phase==='evacuate'&&w.arrived);
- w.stride+=dt;const t=w.stride;
- if(phase==='working'){w.rig.rotation.y=w.job.angle+Math.sin(t*.8)*.06;w.rig.children[0].rotation.x=.06+Math.sin(t*2)*.025;w.limbs[0].rotation.x=-.65+Math.sin(t*(w.job.kind==='repair'?7:3))*.2;w.limbs[1].rotation.x=-.65+Math.sin(t*3+1.5)*.18;if(w.job.kind==='carry')w.limbs[0].rotation.x=w.limbs[1].rotation.x=-.82;if(w.job.kind==='wheelchair'){w.limbs[0].rotation.x=w.limbs[1].rotation.x=-.9+Math.sin(t*6)*.05;}poseLegs(w,false);return;}
- w.rig.children[0].rotation.x=0;
- if(phase==='victim'){poseLegs(w,true);w.rig.children[0].rotation.x=.25+Math.max(0,Math.sin(t*5))*.18;w.limbs[0].rotation.x=-1.4;w.limbs[1].rotation.x=-.3;return;}
- if(phase==='phone'){w.limbs[1].rotation.x=-2.7;w.limbs[0].rotation.x=-.2;w.rig.rotation.y=w.job.angle;return;}
- if(phase==='alert'||phase==='waitHelp'){w.limbs[0].rotation.x=phase==='waitHelp'?-2.6+Math.sin(t*6)*.3:0;w.limbs[1].rotation.x=0;const a=Math.atan2(player.position.x-w.rig.position.x,player.position.z-w.rig.position.z);w.rig.rotation.y+=Math.atan2(Math.sin(a-w.rig.rotation.y),Math.cos(a-w.rig.rotation.y))*.08;poseLegs(w,false);return;}
- if(phase==='escort'){const d=Math.hypot(player.position.x-w.rig.position.x,player.position.z-w.rig.position.z);if(d>.85&&trail.length){if(!w.route.length){while(trail.length&&Math.hypot(trail[0].x-w.rig.position.x,trail[0].z-w.rig.position.z)<.2)trail.shift();if(trail.length)w.route=[trail.shift()];}}else w.route=[];}
- const moving=walkAlong(w,dt);
- if(moving){w.stride+=dt*12;if(w.job.kind==='wheelchair'){w.limbs[0].rotation.x=w.limbs[1].rotation.x=-.6;}else{w.limbs.forEach((l,j)=>l.rotation.x=Math.sin(w.stride+(j%2)*Math.PI)*.6);w.rig.position.y=Math.abs(Math.sin(w.stride))*.028;}}
- else{w.limbs.forEach(l=>l.rotation.x*=.8);w.rig.position.y=0;if(phase==='evacuate'&&Math.hypot(w.rig.position.x-slots[i].x,w.rig.position.z-slots[i].z)<.5){w.arrived=true;w.rig.rotation.y=.2;}if(phase==='elevator')w.rig.rotation.y=Math.PI;}
- poseLegs(w,false);
+ w.stride+=dt;const t=w.stride;const wheelchair=w.job.kind==='wheelchair';let pose=wheelchair?'wheel':'none',speed=0;const extra={};
+ if(phase==='working'){pose=workPose[w.job.kind]||'none';extra.work=w.job.kind==='repair'?2:1;if(!wheelchair)w.rig.rotation.y=w.job.angle+Math.sin(t*.8)*.06;}
+ else if(phase==='victim'){pose='victim';extra.bob=true;}
+ else if(phase==='phone'){pose='phone';w.rig.rotation.y=w.job.angle;}
+ else if(phase==='alert'||phase==='waitHelp'){if(phase==='waitHelp'&&!wheelchair){pose='wave';extra.wave=true;}extra.lookAt=player.position;const a=Math.atan2(player.position.x-w.rig.position.x,player.position.z-w.rig.position.z);w.rig.rotation.y+=Math.atan2(Math.sin(a-w.rig.rotation.y),Math.cos(a-w.rig.rotation.y))*.08;}
+ else if(phase==='escort'){const d=Math.hypot(player.position.x-w.rig.position.x,player.position.z-w.rig.position.z);if(d>.85&&trail.length){if(!w.route.length){while(trail.length&&Math.hypot(trail[0].x-w.rig.position.x,trail[0].z-w.rig.position.z)<.2)trail.shift();if(trail.length)w.route=[trail.shift()];}}else w.route=[];}
+ const before=w.rig.rotation.y;const moving=walkAlong(w,dt);extra.turn=(w.rig.rotation.y-before)/Math.max(dt,.001);
+ if(moving){speed=wheelchair?0:w.speed;if(wheelchair){w.wheels.forEach(r=>r.rotation.x+=dt*w.speed/.36);pose='wheel';}}
+ else{if(phase==='evacuate'&&Math.hypot(w.rig.position.x-slots[i].x,w.rig.position.z-slots[i].z)<.5){w.arrived=true;w.rig.rotation.y=.2;}if(phase==='elevator')w.rig.rotation.y=Math.PI;}
+ if(phase==='evacuate'&&!moving&&w.arrived)extra.lookAt=player.position;
+ w.char.setPose(pose);w.char.update(dt,speed,extra);
  });const count=present();$('assembly-status').textContent=`PONTO DE ENCONTRO · ${count}/${team} PESSOAS`;}
 const present=()=>workers.filter(w=>w.arrived).length;
 // Fire brigade response: engine arrives by the side road, crew enters through the exit and extinguishes the fire.
 const cinematic=()=>ff.phase==='arriving'||(ff.phase==='onscene'&&ff.t<4.4)||ff.phase==='operation'||ff.phase==='spraying';
-function ffWalk(f,dt){const moving=walkAlong(f,dt);if(moving){f.stride+=dt*12;f.limbs.forEach((l,j)=>l.rotation.x=Math.sin(f.stride+(j%2)*Math.PI)*.6);f.rig.position.y=Math.abs(Math.sin(f.stride))*.025;}else{f.limbs.forEach(l=>l.rotation.x*=.8);}if(f.prop.visible&&f!==commander){f.limbs[0].rotation.x=-1.1;}return moving;}
+function ffWalk(f,dt){const before=f.rig.rotation.y;const moving=walkAlong(f,dt);f.char.setPose(f.poseOverride||(f.prop.visible&&f!==commander?'hose':'none'));f.char.update(dt,moving?f.speed:0,{turn:(f.rig.rotation.y-before)/Math.max(dt,.001),lookAt:f===commander&&!moving?player.position:null});return moving;}
 function faceTo(f,x,z,k=.15){const a=Math.atan2(x-f.rig.position.x,z-f.rig.position.z);f.rig.rotation.y+=Math.atan2(Math.sin(a-f.rig.rotation.y),Math.cos(a-f.rig.rotation.y))*k;}
-const reachPose=f=>{f.limbs[0].rotation.x=f.limbs[1].rotation.x=-1.4;};
+const reachPose=f=>{f.poseOverride='reach';};
 // Each firefighter runs a small script: walk, wait, wait-until, or do.
 function runPlan(f,dt){for(let guard=0;guard<8;guard++){const a=f.plan[0];if(!a)return;
  if(a.walk){if(!a.started){a.started=true;f.route=findRoute(f.rig.position,a.walk,ffObstacles());}if(ffWalk(f,dt)&&f.route.length)return;if(f.route.length)return;f.plan.shift();continue;}
- if(a.wait!==undefined){a.wait-=dt;a.pose?.(f,dt);if(a.face)faceTo(f,a.face.x,a.face.z);if(a.wait>0)return;f.plan.shift();continue;}
- if(a.until){if(!a.until()){f.limbs.forEach(l=>l.rotation.x*=.85);if(a.face)faceTo(f,a.face().x,a.face().z,.08);if(f.prop.visible&&f!==commander)f.limbs[0].rotation.x=-1.1;return;}f.plan.shift();continue;}
+ if(a.wait!==undefined){a.wait-=dt;a.pose?.(f,dt);if(a.face)faceTo(f,a.face.x,a.face.z);if(a.wait>0)return;f.plan.shift();f.poseOverride=null;continue;}
+ if(a.until){if(!a.until()){ffWalk(f,dt);if(a.face)faceTo(f,a.face().x,a.face().z,.08);return;}f.plan.shift();continue;}
  if(a.do){a.do(f);f.plan.shift();continue;}}}
 function stepDown(f){const p=truckPoint(-1.55,1.85);f.rig.position.set(p.x,.5,p.z);f.rig.rotation.y=Math.PI/2;f.rig.visible=true;}
-const descend={wait:.5,pose:(f,dt)=>{f.rig.position.y=Math.max(0,f.rig.position.y-dt*1.2);f.limbs[2].rotation.x=-.5;}};
+const descend={wait:.5,pose:(f,dt)=>{f.rig.position.y=Math.max(0,f.rig.position.y-dt*1.2);f.poseOverride='crouch';}};
 function planOnScene(){
  const cab=truckPoint(-1.55,1.85),box1=truckPoint(-1.6,-1.8);
  commander.plan=[{do:stepDown},{...descend},{walk:commanderSpot},{do:()=>{ff.cmdReady=true;notify('O comandante aguarda você no portão do pátio.');}},{until:()=>false,face:()=>player.position}];
@@ -245,8 +232,8 @@ function updateFirefighters(dt){
  // Isolation re-closed once both are inside.
  if(ff.barrierOpen&&!ff.barrierPassed&&crew.every(f=>f.rig.position.z>-5.8)){ff.barrierPassed=true;ff.barrierOpen=false;}
  if(ff.phase==='operation'&&ff.sprayReady.every(Boolean)){ff.phase='spraying';ff.sprayT=0;notify('Combate com água: os bombeiros resfriam o motor e as caixas.');}
- if(ff.phase==='spraying'){ff.sprayT+=dt;fireLevel=Math.max(0,1-ff.sprayT/4.5);const ends=[new T.Vector3(5.4,1.2,4.2),new T.Vector3(5.4,1.1,5.6)];crew.forEach((f,i)=>{faceTo(f,ends[i].x,ends[i].z);f.limbs[0].rotation.x=f.limbs[1].rotation.x=-1.3;});spray.forEach((m,i)=>{const f=crew[i%2];m.visible=ff.sprayT<4.8;const k=(ff.sprayT*1.9+i/30)%1;const origin=new T.Vector3(.3,1.05,.95).applyMatrix4(f.rig.matrixWorld);m.position.copy(origin).lerp(ends[i%2],k);m.position.y+=Math.sin(k*Math.PI)*.35;m.scale.setScalar((.8+k*3)*.2);m.material.opacity=.85*(1-k*.5);m.material.color.set('#9fd8ff');});
-  if(ff.sprayT>=5.2){spray.forEach(m=>m.visible=false);ff.phase='done';crew.forEach(f=>f.limbs.forEach(l=>l.rotation.x=0));if(objectives[state.step]?.id==='firefight')applyState(interact(state,'firefight',{fireOut:true}));}}
+ if(ff.phase==='spraying'){ff.sprayT+=dt;fireLevel=Math.max(0,1-ff.sprayT/4.5);const ends=[new T.Vector3(5.4,1.2,4.2),new T.Vector3(5.4,1.1,5.6)];crew.forEach((f,i)=>{faceTo(f,ends[i].x,ends[i].z);f.poseOverride='spray';f.char.setPose('spray');f.char.update(dt,0,{});});spray.forEach((m,i)=>{const f=crew[i%2];m.visible=ff.sprayT<4.8;const k=(ff.sprayT*1.9+i/30)%1;const origin=new T.Vector3(.3,1.05,.95).applyMatrix4(f.rig.matrixWorld);m.position.copy(origin).lerp(ends[i%2],k);m.position.y+=Math.sin(k*Math.PI)*.35;m.scale.setScalar((.8+k*3)*.2);m.material.opacity=.85*(1-k*.5);m.material.color.set('#9fd8ff');});
+  if(ff.sprayT>=5.2){spray.forEach(m=>m.visible=false);ff.phase='done';crew.forEach(f=>{f.poseOverride='hose';});if(objectives[state.step]?.id==='firefight')applyState(interact(state,'firefight',{fireOut:true}));}}
 }
 function cameraFocus(){if(ff.phase==='arriving')return truck.position;if(ff.phase==='onscene'&&ff.t<4.4)return truckPoint(-1.6,0);if(ff.phase==='operation')return crew[0].rig.position;if(ff.phase==='spraying')return {x:4.8,z:3.8};return null;}
 function anchorOf(o){if(!o)return null;if(o.who==='commander')return commander.rig.visible?commander.rig.position:{x:o.x,z:o.z};if(o.who)return workers.find(w=>w.job.name===o.who).rig.position;return {x:o.ax??o.x,z:o.az??o.z};}
@@ -304,7 +291,7 @@ let fpsTime=0,fpsFrames=0,autoLowered=false;
 function resize(){camera.aspect=innerWidth/innerHeight;camera.fov=innerWidth<650?60:52;camera.updateProjectionMatrix();gfx?.resize();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));}addEventListener('resize',()=>{resize();updateLabelBounds();});resize();updateHUD();
 let last=performance.now();const v=new T.Vector3();
 function animateFire(f,on,scale){animateFireFx(f,on,scale,time);}
-function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-last)/1000,.05);last=now;if(!paused){time+=dt;elapsed+=dt;let sx=(keys.has('d')||keys.has('arrowright')?1:0)-(keys.has('a')||keys.has('arrowleft')?1:0),sy=(keys.has('s')||keys.has('arrowdown')?1:0)-(keys.has('w')||keys.has('arrowup')?1:0);const n=discharge||cinematic()?0:Math.hypot(sx,sy);if(n){sx/=n;sy/=n;const speed=keys.has('shift')?4.8:3;const dx=sx*speed*dt,dz=sy*speed*dt;if(canMove(player.position.x+dx,player.position.z,obstacles))player.position.x+=dx;if(canMove(player.position.x,player.position.z+dz,obstacles))player.position.z+=dz;const a=Math.atan2(dx,dz);player.rotation.y+=Math.atan2(Math.sin(a-player.rotation.y),Math.cos(a-player.rotation.y))*.22;walk+=dt*speed*4;limbs.forEach((l,i)=>l.rotation.x=Math.sin(walk+(i%2)*Math.PI)*.55);body.position.y=Math.abs(Math.sin(walk))*.025;}else{limbs.forEach(l=>l.rotation.x*=.8);body.position.y=Math.sin(time*2)*.013;}}
+function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-last)/1000,.05);last=now;if(!paused){time+=dt;elapsed+=dt;let sx=(keys.has('d')||keys.has('arrowright')?1:0)-(keys.has('a')||keys.has('arrowleft')?1:0),sy=(keys.has('s')||keys.has('arrowdown')?1:0)-(keys.has('w')||keys.has('arrowup')?1:0);const n=discharge||cinematic()?0:Math.hypot(sx,sy);if(n){sx/=n;sy/=n;const speed=keys.has('shift')?4.8:3;const dx=sx*speed*dt,dz=sy*speed*dt;if(canMove(player.position.x+dx,player.position.z,obstacles))player.position.x+=dx;if(canMove(player.position.x,player.position.z+dz,obstacles))player.position.z+=dz;const a=Math.atan2(dx,dz);const d=Math.atan2(Math.sin(a-player.rotation.y),Math.cos(a-player.rotation.y))*.22;player.rotation.y+=d;playerMove={speed,turn:d/Math.max(dt,.001)};}else playerMove={speed:0,turn:0};}
  const lastTrail=trail.at(-1);if(eva.phase==='escort'&&(!lastTrail||Math.hypot(lastTrail.x-player.position.x,lastTrail.z-player.position.z)>.3))trail.push({x:player.position.x,z:player.position.z});
  rescueFromIsolation();unstick();const mobile=innerWidth<850;const focus=cameraFocus();const tgt=currentTarget(state),tgtA=tgt&&!tgt.auto?anchorOf(tgt):null;const desired=focus?new T.Vector3(focus.x,0,focus.z):new T.Vector3(player.position.x+(mobile?0:camShiftX*.6),0,player.position.z);
  // Pull the view toward the current target so the blue circle sits near the middle of the screen.
@@ -313,10 +300,11 @@ function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-last)/10
  const seeThrough=[{x:player.position.x,y:1.4,z:player.position.z},{x:player.position.x,y:.45,z:player.position.z}];if(tgtA)seeThrough.push({x:tgtA.x,y:.9,z:tgtA.z});if(focus)seeThrough.push({x:focus.x,y:1,z:focus.z});updateSeeThrough(dt,seeThrough);
  const spread=state.fire==='spread',motorOn=!spread||!done('fire');const out=state.fire==='out',lvl=Math.max(fireLevel,.05);animateFire(motorFire,motorOn&&!out&&fireLevel>.03,(spread?1.25:1)*lvl);animateFire(palletFire,spread&&!out&&fireLevel>.03,1.5*lvl);smokeLevel+=((out?0:Math.max(fireLevel,.35))-smokeLevel)*Math.min(1,dt*.6);
  const leak=state.door!=='closed';smoke.forEach((m,i)=>{const p=(time*(spread?.2:.15)+m.userData.phase)%1;if(m.userData.leak){m.visible=leak;m.position.set(2.9-p*3.4,1.9+p*1.2,2+Math.sin(i+time)*.35);m.scale.setScalar((.35+p*1.4)*1.15);m.material.rotation+=m.userData.spin*dt;m.material.opacity=(1-p)*.2*smokeLevel;}else{m.visible=true;m.position.set(5.4+p*1.5+Math.sin(i+time)*.15,1.6+p*(spread?4.6:3.4),4.6+p*.6);m.scale.setScalar(((spread?.6:.45)+p*(spread?3:2.3))*1.15);m.material.rotation+=m.userData.spin*dt;m.material.opacity=(1-p)*(spread?.4:.34)*smokeLevel;}});
- if(discharge){const age=time-discharge.start;const origin=new T.Vector3(.37,1,.4).applyMatrix4(player.matrixWorld);spray.forEach((m,i)=>{m.visible=true;const f=(age*1.9+i/30)%1;m.position.copy(origin).lerp(discharge.end,f);m.position.x+=Math.sin(time*10+i)*.17*f;m.position.y+=Math.cos(i*2)*.09*f;m.scale.setScalar((.4+f*2)*.22);m.material.color.set(discharge.agent==='co2'?'#ffffff':'#f3f1e6');m.material.opacity=.75*(1-f*.4);});if(age>=2){const next=discharge.next;discharge=null;spray.forEach(m=>m.visible=false);applyState(next);clearTimeout(choiceTimer);choiceTimer=setTimeout(()=>{if(!paused&&!finished&&objectives[state.step]?.id==='spread')openChoice();},1600);}}
+ if(discharge){const age=time-discharge.start;const origin=new T.Vector3(-.3,1,.5).applyMatrix4(player.matrixWorld);spray.forEach((m,i)=>{m.visible=true;const f=(age*1.9+i/30)%1;m.position.copy(origin).lerp(discharge.end,f);m.position.x+=Math.sin(time*10+i)*.17*f;m.position.y+=Math.cos(i*2)*.09*f;m.scale.setScalar((.4+f*2)*.22);m.material.color.set(discharge.agent==='co2'?'#ffffff':'#f3f1e6');m.material.opacity=.75*(1-f*.4);});if(age>=2){const next=discharge.next;discharge=null;spray.forEach(m=>m.visible=false);applyState(next);clearTimeout(choiceTimer);choiceTimer=setTimeout(()=>{if(!paused&&!finished&&objectives[state.step]?.id==='spread')openChoice();},1600);}}
  const alarmOn=done('alarm');sirenLight.intensity=alarmOn?(Math.sin(time*8)+1)*2:0;beacon.material=mat(alarmOn?'#ff5f32':'#ffb92e');phoneLight.material=mat(done('order')?'#ff5f32':'#8ee07b');if(audio){gain.gain.setTargetAtTime(!muted&&alarmOn&&!paused&&!finished?.025:0,audio.currentTime,.1);osc.frequency.setTargetAtTime(630+Math.sin(time*3)*200,audio.currentTime,.04);}
  if(truck.visible){const blink=Math.sin(time*9)>0;truckLights[0].material=mat(blink?'#ff3b30':'#5a1210');truckLights[1].material=mat(blink?'#1a2a5a':'#3b7bff');truckLight.color.set(blink?'#ff3b30':'#3b7bff');truckLight.intensity=3;}else truckLight.intensity=0;
  const o=currentTarget(state);if(o){const an=anchorOf(o);const personal=!!o.who;targetRing.position.set(an.x,.06,an.z);targetRing.scale.setScalar(personal?.85:Math.min(1.5,Math.max(1,reachOf(o)/1.6)));marker.position.set(an.x,(personal?2.95:2.7)+Math.sin(time*3)*.14,an.z);diamond.rotation.y=time*.7;const pulse=(time*.65)%1;targetPulse.scale.setScalar(1+pulse*.42);targetPulse.material.opacity=.28*(1-pulse);playerDiamond.position.y=2.3+Math.sin(time*2.7)*.06;playerDiamond.rotation.y=time*.6;v.copy(marker.position);v.y+=.7;v.project(camera);$('target-label').style.left=`${Math.max(labelBounds.min,Math.min(labelBounds.max,(v.x*.5+.5)*innerWidth))}px`;$('target-label').style.top=`${Math.max(innerWidth<600?330:110,Math.min(innerHeight-135,(-v.y*.5+.5)*innerHeight))}px`;const near=!o.auto&&nearTarget(o);$('action').classList.toggle('near',near);$('action-hint').textContent=discharge?'DESCARGA EM ANDAMENTO':cinematic()?'ACOMPANHE OS BOMBEIROS':o.auto?'AGUARDE':near?'PRESSIONE PARA INTERAGIR':'SIGA O MARCADOR';}
+ if(!paused){const tgtNow=currentTarget(state);const la=tgtNow&&!tgtNow.auto?anchorOf(tgtNow):null;playerChar.setPose(discharge?'spray':state.held?'carry':'none');playerChar.update(dt,playerMove.speed,{turn:playerMove.turn,lookAt:la&&playerMove.speed<.1?la:null});}
  if(!paused||finished)updateWorkers(dt);
  if(!paused){updateFirefighters(dt);animateDoors(dt);syncScene();}
  sun.position.set(look.x-9,20,look.z+5);sun.target.position.set(look.x,0,look.z);
