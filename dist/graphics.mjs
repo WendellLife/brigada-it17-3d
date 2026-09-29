@@ -20,20 +20,20 @@ export function defaultQuality(){
  return coarse?'baixa':'media';
 }
 export function createRenderPipeline(renderer,scene,camera,sun){
- const pmrem=new T.PMREMGenerator(renderer);scene.environment=pmrem.fromScene(new RoomEnvironment(),.04).texture;scene.environmentIntensity=.42;
+ const pmrem=new T.PMREMGenerator(renderer);scene.environment=pmrem.fromScene(new RoomEnvironment(),.04).texture;scene.environmentIntensity=.3;
  let composer=null,bloom=null,ao=null,level=null;
  function build(){
   composer?.dispose?.();composer=null;bloom=null;ao=null;
-  const q=QUALITY[level];
+  const q={...QUALITY[level],level};
   renderer.setPixelRatio(Math.min(devicePixelRatio,q.pixelRatio));renderer.setSize(innerWidth,innerHeight);
   renderer.shadowMap.enabled=q.shadows;sun.castShadow=q.shadows;
   if(sun.shadow.mapSize.x!==q.shadowSize){sun.shadow.mapSize.set(q.shadowSize,q.shadowSize);sun.shadow.map?.dispose();sun.shadow.map=null;}
   scene.traverse(m=>{if(m.material){const list=Array.isArray(m.material)?m.material:[m.material];list.forEach(x=>x.needsUpdate=true);}});
   if(!q.bloom&&!q.ao)return;
-  composer=new EffectComposer(renderer);composer.setPixelRatio(Math.min(devicePixelRatio,q.pixelRatio));composer.setSize(innerWidth,innerHeight);
+  composer=new EffectComposer(renderer,new T.WebGLRenderTarget(innerWidth,innerHeight,{type:T.HalfFloatType,samples:q.level==='alta'?4:2}));composer.setPixelRatio(Math.min(devicePixelRatio,q.pixelRatio));composer.setSize(innerWidth,innerHeight);
   composer.addPass(new RenderPass(scene,camera));
   if(q.ao){ao=new GTAOPass(scene,camera,innerWidth,innerHeight);ao.output=GTAOPass.OUTPUT.Default;ao.blendIntensity=.85;ao.updateGtaoMaterial({radius:.45,distanceExponent:1.4,thickness:1.2,scale:1,samples:12});ao.updatePdMaterial({lumaPhi:10,depthPhi:2,normalPhi:3,radius:6,rings:2,samples:12});composer.addPass(ao);}
-  if(q.bloom){bloom=new UnrealBloomPass(new T.Vector2(innerWidth,innerHeight),.42,.35,1.02);composer.addPass(bloom);}
+  if(q.bloom){bloom=new UnrealBloomPass(new T.Vector2(innerWidth,innerHeight),.28,.3,1.45);composer.addPass(bloom);}
   composer.addPass(new OutputPass());
  }
  const api={

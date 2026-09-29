@@ -5,11 +5,11 @@ import {objectives,initialState,interact,answer,canMove,currentTarget,selectExti
 const $=id=>document.getElementById(id);
 let renderer;
 try{renderer=new T.WebGLRenderer({antialias:true,powerPreference:'high-performance'});}catch(e){$('loading').textContent='Não foi possível iniciar o 3D. Ative a aceleração gráfica do navegador e recarregue.';throw e;}
-renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;$('game').appendChild(renderer.domElement);$('loading').remove();
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=.95;$('game').appendChild(renderer.domElement);$('loading').remove();
 const scene=new T.Scene();scene.background=new T.Color('#9fb3bf');scene.fog=new T.Fog('#9fb3bf',38,90);
 // Third-person camera at 45°, just behind and above the brigade member.
 const camera=new T.PerspectiveCamera(52,innerWidth/innerHeight,.1,200);const look=new T.Vector3(-2.5,0,-1);const camOffset=new T.Vector3(0,10.8,10.8);let camDist=1;
-scene.add(new T.HemisphereLight(0xdcecff,0x5c4a36,1.0));const sun=new T.DirectionalLight(0xffe4b8,2.7);sun.position.set(-9,20,5);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-24,right:24,top:22,bottom:-22,near:1,far:70});sun.shadow.radius=3;sun.shadow.bias=-.0003;sun.shadow.normalBias=.035;scene.add(sun);const fill=new T.DirectionalLight(0xb7dcff,1.4);fill.position.set(10,7,-4);scene.add(fill);
+scene.add(new T.HemisphereLight(0xdcecff,0x5c4a36,.85));const sun=new T.DirectionalLight(0xffe4b8,2.2);sun.position.set(-9,20,5);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-24,right:24,top:22,bottom:-22,near:1,far:70});sun.shadow.radius=3;sun.shadow.bias=-.0003;sun.shadow.normalBias=.035;scene.add(sun);const fill=new T.DirectionalLight(0xb7dcff,1.4);fill.position.set(10,7,-4);scene.add(fill);
 const mats={};function mat(c,metal=0,rough=.7){const key=c+'-'+metal+'-'+rough;return mats[key]??=new T.MeshStandardMaterial({color:c,metalness:metal,roughness:rough});}
 function box(w,h,d,c,x,y,z,parent=scene,metal=0){const m=new T.Mesh(new T.BoxGeometry(w,h,d),typeof c==='object'?c:mat(c,metal));m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;}
 function cyl(r,rb,h,c,x,y,z,parent=scene,n=16){const m=new T.Mesh(new T.CylinderGeometry(r,rb,h,n),mat(c,.25));m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;}
@@ -20,7 +20,7 @@ const obstacles=[];function obstacle(x,z,w,d){const o={x,z,w,d};obstacles.push(o
 const done=id=>state.completed.includes(id);
 // Architectural shell: tiled slab, back wall with emergency exit, steel structure and service pipes.
 box(24,.4,17,'#555f63',0,-.27,1);box(25,.22,18,'#303e47',0,-.57,1);
-const TX=makeTextures();{const floor=new T.Mesh(new T.BoxGeometry(23.4,.035,15.3),new T.MeshStandardMaterial({map:TX.concrete,color:'#c3c7c3',roughness:.66,metalness:.04}));floor.position.set(0,-.045,1);floor.receiveShadow=true;scene.add(floor);}
+const TX=makeTextures();{const floor=new T.Mesh(new T.BoxGeometry(23.4,.035,15.3),new T.MeshStandardMaterial({map:TX.concrete,color:'#aeb2ae',roughness:.7,metalness:.03}));floor.position.set(0,-.045,1);floor.receiveShadow=true;scene.add(floor);}
 // Surroundings: lawn and sidewalk around the plant.
 {const g=new T.Mesh(new T.PlaneGeometry(160,160),new T.MeshStandardMaterial({map:TX.grass,roughness:1}));g.rotation.x=-Math.PI/2;g.position.y=-.69;g.receiveShadow=true;scene.add(g);const walk=new T.Mesh(new T.BoxGeometry(27,.12,20),new T.MeshStandardMaterial({color:'#9aa19c',roughness:.9}));walk.position.set(-.5,-.62,0);walk.receiveShadow=true;scene.add(walk);}
 box(2.7,1.2,.32,'#a3a8a3',-10.15,.55,-6.5);box(3.6,1.2,.32,'#a3a8a3',-4.6,.55,-6.5);box(14.3,5.8,.32,'#a3a8a3',4.35,2.8,-6.5);box(.3,4.7,5,'#8d9596',11.6,2.2,-4);
@@ -114,9 +114,11 @@ const smoke=[];for(let i=0;i<34;i++){const m=makeSmokeSprite(true,i);m.userData.
 for(const [k,m] of Object.entries(mats)){const hex=k.split('-')[0].toLowerCase();
  if(['#a3a8a3','#8d9596','#b7bcb4'].includes(hex)){m.map=TX.wall;m.color.set('#eceeea');m.needsUpdate=true;}
  if(['#b28a57','#b99461','#b99462','#a5855a','#c5a16b'].includes(hex)){m.map=TX.cardboard;m.color.set('#f2e6d2');m.roughness=.9;m.needsUpdate=true;}
- if(['#737f84','#425866','#4f6570','#294659','#486072','#5c7683','#849398'].includes(hex)){m.map=TX.metal;m.metalness=Math.max(m.metalness,.45);m.roughness=.42;m.needsUpdate=true;}}
+ if(['#737f84','#425866','#4f6570','#294659','#486072','#5c7683','#849398'].includes(hex)){m.map=TX.metal;m.metalness=Math.max(m.metalness,.3);m.roughness=.55;m.needsUpdate=true;}}
+// Tame near-white surfaces (desks, cones, stripes) so they do not blow out under the sun or trigger bloom.
+for(const m of Object.values(mats)){const c=m.color;const lum=.2126*c.r+.7152*c.g+.0722*c.b;if(lum>.62&&!m.map)c.multiplyScalar(.62/lum+.08);}
 // High-bay lamps hanging from the roof structure.
-const lampGlows=[];for(const x of [-6,0,6])for(const z of [-2.2,3.6]){rod([x,6.6,z],[x,5.45,z],.015,'#2b3236');cyl(.28,.11,.2,'#2e3a40',x,5.3,z);const disc=new T.Mesh(new T.CircleGeometry(.23,20),new T.MeshBasicMaterial({color:new T.Color(2.2,2.1,1.9)}));disc.rotation.x=Math.PI/2;disc.position.set(x,5.165,z);scene.add(disc);const g=glowSprite(new T.Color(1,.95,.85),.8);g.position.set(x,5.1,z);scene.add(g);lampGlows.push(g);}
+const lampGlows=[];for(const x of [-6,0,6])for(const z of [-2.2,3.6]){rod([x,6.6,z],[x,5.45,z],.015,'#2b3236');cyl(.28,.11,.2,'#2e3a40',x,5.3,z);const disc=new T.Mesh(new T.CircleGeometry(.23,20),new T.MeshBasicMaterial({color:new T.Color(1.7,1.65,1.5)}));disc.rotation.x=Math.PI/2;disc.position.set(x,5.165,z);scene.add(disc);const g=glowSprite(new T.Color(1,.95,.85),.8);g.position.set(x,5.1,z);scene.add(g);lampGlows.push(g);}
 // Autonomous emergency lights: switch on when the alarm sounds (IT 17 complementary systems).
 const emergencyLights=[];for(const [x,y,z] of [[-6,3.3,-6.28],[-9.2,3.3,-6.28],[1.6,2.95,1.0],[.4,3.25,4.05]]){box(.52,.16,.12,'#f2f2ee',x,y,z);for(const dx of [-.14,.14]){const lamp=new T.Mesh(new T.SphereGeometry(.05,10,8),new T.MeshBasicMaterial({color:'#fffbe8'}));lamp.position.set(x+dx,y-.05,z+.07);scene.add(lamp);const g=glowSprite(new T.Color(1.4,1.35,1.1),.9);g.position.set(x+dx,y-.08,z+.14);g.visible=false;scene.add(g);emergencyLights.push(g);}}
 // Pallet racking along the right wall.
