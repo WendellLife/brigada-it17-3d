@@ -39,6 +39,15 @@ Investigar a fumaça → alarme → 193 → vítima → classificar → extintor
 | Diego | Manutenção | Aguarda orientação e sai na ordem de abandono |
 | Bruno | Logística | Tenta usar o elevador até ser orientado |
 
+## Gráficos
+
+- Botão **Gráficos** no topo: Baixa, Média ou Alta. O jogo escolhe Média no computador e Baixa no celular e lembra a escolha. Se o jogo ficar lento, a qualidade baixa sozinha uma vez.
+- **Média/Alta:** brilho (bloom) no fogo, giroflex e luminárias, reflexos de ambiente em metais e sombras suaves que acompanham o jogador. **Baixa:** sem pós-processamento e sem sombras, para PCs fracos.
+- Texturas geradas no próprio código (concreto, chapas, papelão, grama, asfalto): o download não aumenta.
+- Fogo com chamas brilhantes e faíscas, fumaça volumosa, jatos de água e CO₂ em partículas.
+- Luminárias no teto, luzes de emergência que acendem com o alarme, porta-paletes e entorno com gramado.
+- Personagens com formas arredondadas, rosto, capacete com aba, colete refletivo, cinto, luvas e botas.
+
 ## Arquivos
 
 - `dist/rules.mjs`: etapas, decisões, extintores e colisões. Para reaproveitar a estrutura em outra fase, comece por aqui.
@@ -46,6 +55,8 @@ Investigar a fumaça → alarme → 193 → vítima → classificar → extintor
 - `dist/game.mjs`: cenário 3D, personagens, efeitos e interface.
 - `dist/index.html` e `dist/style.css`: interface. O CSS é o do NR 23, com acréscimos no final.
 - `dist/three.module.js`: Three.js 0.170.0, incluída localmente.
+- `dist/graphics.mjs`: qualidade gráfica, pós-processamento, texturas e partículas.
+- `dist/addons/`: módulos oficiais do Three.js 0.170.0 (pós-processamento e ambiente), mesma licença MIT.
 - `*.test.mjs` e `test.mjs`: testes.
 - `IT17-COMPARATIVO.md` e `SAFETY-NOTES.md`: base normativa e decisões didáticas.
 

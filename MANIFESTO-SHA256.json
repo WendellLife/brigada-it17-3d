@@ -1,12 +1,28 @@
 {
   "algorithm": "SHA-256",
   "dist": {
+    "addons/environments/RoomEnvironment.js": "045b0b045793a2b15457e9dc893022b0ef2e36fa4922da83b2524afb5133ab91",
+    "addons/math/SimplexNoise.js": "9b8d541b77b0ddc79afaa6a1de8941452c191b8b9006f04e7b8fc422e2b263f7",
+    "addons/postprocessing/EffectComposer.js": "4d45663ca6dfac75d4b9b0954c1204c4e49817cf40691f9975b10372016e26b7",
+    "addons/postprocessing/GTAOPass.js": "7b9911db98a60ae2dab1ce7477a676b8b218219af139b2db93bf5a00a1ba3b7c",
+    "addons/postprocessing/MaskPass.js": "328cf7db0da5d9be83ffe39d54b01d5ac1fddf108cc98182ddbb056f5c8b537f",
+    "addons/postprocessing/OutputPass.js": "e5185b12dc7bd38ee4a1dcee1a90d11efef5995e9231f03ec663bf5c05bffa2e",
+    "addons/postprocessing/Pass.js": "294c2ab6b2fd42092e6210f621d094c23d77ee735a4f3a2fc9bf79e3148e5257",
+    "addons/postprocessing/RenderPass.js": "8ca84d38e190048e555d77600ff7239bd91e2effde9238daa770533f75207d5d",
+    "addons/postprocessing/ShaderPass.js": "ea06d52cf5d054d68cbe48b58bf98ee78c53976af863b123ccbe8162ef9f2e2c",
+    "addons/postprocessing/UnrealBloomPass.js": "b3f6bcfe3605f9d46ed88fc3dfe953f179a4a52e368c5834198491d7a0f63384",
+    "addons/shaders/CopyShader.js": "4e3346db194db56a596cd074e9bdb39fb5eb52040c333e0d29dc4eb1324d3b1d",
+    "addons/shaders/GTAOShader.js": "aa66919bc6f352bbadfeda623032cf3489f96de0d46e7188a1707a3cdf9c841b",
+    "addons/shaders/LuminosityHighPassShader.js": "61b66ca5f4c60378cc8442bfcac23b4e9482b793bf4f1683cc856a7bbb24642e",
+    "addons/shaders/OutputShader.js": "4944cecd49c0d4d1520a4d927bde8a590fd43f041ee913252b9451855a01d0f0",
+    "addons/shaders/PoissonDenoiseShader.js": "c95f23ff760ec66474144f7304d2c0a7672e4947188f5fc99af82953ea98ab40",
     "evacuation.mjs": "fc2b68c33deb77356eb257f375b604650cc7ac1a917e46858a8c5cea794868ff",
     "favicon.svg": "37f9846ccf1fda2ab01491f6b763688fe94a2e2017058e2b3571a3b11e8b6591",
-    "game.mjs": "78b2dbccadfd1461dd6296297ac78a55b4f5e60fdeb21c2f64744e4eb5f65909",
-    "index.html": "d0aa31933b436365ccf34318314b7b147363b4d523b6451cfe6b3e0a7cddff64",
+    "game.mjs": "26d7aa6c8e9e5207ee24323105d7792dc143564724046eb48ca5a9751cfcb8fc",
+    "graphics.mjs": "07b523a3a0d1ae34a4b9e252c54d71462182a197708e426546be9bdec00c92f6",
+    "index.html": "1b31a27f8ea1e33f757625f11b9800bb5ec09d6cdcce88acb62ccf7651a4c67f",
     "rules.mjs": "09f15534bd04287ad9022022f3dacbeffe8b88d6fcd117fc5b8aba079e2240f2",
-    "style.css": "f0f40899da47d0167d0db8617556ae8863b7c6d8e8b1bc0e9efa15b2e0d825d3",
+    "style.css": "d95c0218f4b269e8f5054dda235a94d9d94660e509498635e99e530150586f9a",
     "three.module.js": "ce1fa418de16a19495a9f72495580e3015d7745c296d3ce0485897f902ddedfb"
   }
 }
