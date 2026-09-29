@@ -8,7 +8,7 @@ assert.equal(workerPhase('victim',s0),'victim');assert.equal(workerPhase('victim
 assert.equal(workerPhase('other',upTo('alarm')),'alert');assert.equal(workerPhase('other',upTo('order')),'evacuate','Demais setores saem na ordem de abandono');
 assert.equal(workerPhase('phone',upTo('call')),'phone');assert.equal(workerPhase('phone',upTo('order')),'evacuate');
 assert.equal(workerPhase('elevator',upTo('order')),'elevator','Bruno tenta o elevador');assert.equal(workerPhase('elevator',upTo('elevator')),'evacuate');
-assert.equal(workerPhase('mobility',upTo('order')),'waitHelp');assert.equal(workerPhase('mobility',upTo('assist')),'escort');assert.equal(workerPhase('mobility',upTo('elevator')),'escort');assert.equal(workerPhase('mobility',upTo('exit')),'evacuate','Eva segue sozinha ao ponto de encontro depois da saída');
+assert.equal(workerPhase('mobility',upTo('order')),'waitHelp');assert.equal(workerPhase('mobility',upTo('assist')),'evacuate','Eva segue sozinha depois de orientada');
 // Paredes do setor: só se atravessa pela porta; porta fechada bloqueia.
 assert.equal(canMove(2.6,5,[]),false);assert.equal(canMove(6,.4,[]),false);assert.equal(canMove(2.6,2,[]),true);
 const out=findRoute({x:8.8,z:3.1},{x:-7.6,z:-7.35},[]);assert.ok(out.length,'Rota do setor até a saída');

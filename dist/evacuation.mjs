@@ -7,7 +7,7 @@ export function workerPhase(role,s){
  const d=id=>s.completed.includes(id);
  if(role==='victim')return d('victim')?'evacuate':'victim';
  if(role==='sector')return d('alarm')?'evacuate':'working';
- if(role==='mobility'){if(d('exit'))return 'evacuate';if(d('assist'))return 'escort';return d('alarm')?'waitHelp':'working';}
+ if(role==='mobility'){if(d('assist'))return 'evacuate';return d('alarm')?'waitHelp':'working';}
  if(role==='phone'){if(d('order'))return 'evacuate';if(d('call'))return 'phone';return d('alarm')?'alert':'working';}
  if(role==='elevator'){if(d('elevator'))return 'evacuate';if(d('order'))return 'elevator';return d('alarm')?'alert':'working';}
  if(d('order'))return 'evacuate';return d('alarm')?'alert':'working';

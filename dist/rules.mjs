@@ -34,10 +34,10 @@ export const objectives = [
    {id:'open',label:'Abrir as portas e janelas para ventilar o setor.',feedback:'Ventilar alimenta o fogo com oxigênio e espalha a fumaça. Mantenha as portas fechadas.'}
   ]},
  {id:'order',ax:4.6,az:.9,r:1.6,ref:'4.8.3',title:'Dê a ordem de abandono',description:'Use a central de alarme e som na parede do fundo do setor, perto da porta.',tip:'Ordem de abandono: priorize o local sinistrado, os setores próximos e as áreas de maior risco.',x:4.6,z:1.95},
- {id:'assist',who:'Eva',ref:'Conteúdo',title:'Auxilie a Eva',description:'Eva usa cadeira de rodas. Conduza-a até a saída.',tip:'Pessoas com mobilidade reduzida: aborde, explique o que vai fazer e conduza conforme o plano de emergência.',x:4,z:5.9},
- {id:'door',ax:2.6,az:2,r:1.9,ref:'4.6.6',title:'Feche a porta do setor',description:'Com Eva no corredor, feche a porta pelo lado de fora do setor para conter fogo e fumaça.',tip:'Confinamento: portas fechadas retardam a propagação do fogo e da fumaça. Não tranque.',x:1.1,z:2.2},
+ {id:'assist',who:'Eva',ref:'Conteúdo',title:'Auxilie a Eva',description:'Eva usa cadeira de rodas. Oriente-a sobre a rota acessível até o ponto de encontro.',tip:'Pessoas com mobilidade reduzida: aborde, explique a situação e a rota e confirme que ela consegue seguir, conforme o plano de emergência.',x:4,z:5.9},
+ {id:'door',ax:2.6,az:2,r:1.9,ref:'4.6.6',title:'Feche a porta do setor',description:'Depois que a Eva passar, feche a porta pelo lado do corredor para conter fogo e fumaça.',tip:'Confinamento: portas fechadas retardam a propagação do fogo e da fumaça. Não tranque.',x:1.1,z:2.2},
  {id:'elevator',who:'Bruno',ref:'4.8.3',title:'Impeça o uso do elevador',description:'Bruno está indo para o elevador. Oriente-o para a rota de fuga.',tip:'Em incêndio, nunca use o elevador. Siga a rota sinalizada até a saída de emergência.',x:-.6,z:-3.8},
- {id:'exit',ax:-7.6,az:-6.2,r:1.7,ref:'4.6.5',title:'Conduza pela rota',description:'Siga as setas do piso até a saída de emergência, com Eva. Dali ela segue sozinha ao ponto de encontro.',tip:'Mantenha o grupo unido, caminhe sem correr e não volte para buscar objetos.',x:-7.6,z:-4.8},
+ {id:'exit',ax:-7.6,az:-6.2,r:1.7,ref:'4.6.5',title:'Conduza pela rota',description:'Siga as setas do piso até a saída de emergência.',tip:'Caminhe sem correr, confira se ninguém ficou para trás e não volte para buscar objetos.',x:-7.6,z:-4.8},
  {id:'meeting',ax:-7.6,az:-10.5,r:1.8,ref:'4.6.5',title:'Vá ao ponto de encontro',description:'Atravesse a porta e siga até a placa no pátio externo.',tip:'Abandono de área: leve as pessoas a local seguro, a no mínimo 100 m do sinistro no mundo real.',x:-7.6,z:-10.15},
  {id:'headcount',ax:-4.4,az:-9,r:1.3,ref:'4.8.4',title:'Faça a contagem',description:'Use a prancheta de controle e confira toda a equipe.',tip:'Conte todos antes de informar o Corpo de Bombeiros. Ninguém retorna ao prédio para buscar pessoas.',x:-5.1,z:-9},
  {id:'isolate',ax:-6.1,az:-8.1,r:1.4,ref:'4.6.7',title:'Isole o prédio',description:'No pátio, pegue o kit de isolamento ao lado da saída e feche a passagem com cones e fita.',tip:'Isolamento: impeça o acesso de pessoas não autorizadas à área sinistrada.',x:-6.9,z:-8.1},
@@ -113,7 +113,7 @@ export function interact(s,id,ctx={}){
  if(id==='alarm')next.feedback='Alarme acionado. O setor de embalagem inicia o abandono.';
  if(id==='power'){next.power=false;next.feedback='Energia do setor de embalagem cortada pelo comando remoto.';}
  if(id==='order'){next.fire='spread';next.feedback='Ordem de abandono total anunciada. Todos seguem para a saída.';}
- if(id==='assist')next.feedback='Você explicou a Eva o que vai fazer. Ela acompanha você.';
+ if(id==='assist')next.feedback='Você orientou a Eva sobre a rota. Ela segue sozinha até o ponto de encontro.';
  if(id==='door'){next.door='closed';next.feedback='Porta fechada. Fogo e fumaça contidos no setor.';}
  if(id==='elevator')next.feedback='Bruno foi orientado e segue pela rota de fuga.';
  if(id==='exit')next.feedback='Saída de emergência alcançada.';

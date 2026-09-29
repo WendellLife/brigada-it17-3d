@@ -29,3 +29,28 @@ h1,h2,h3,p,strong,small,span,b,dt,dd,li,kbd,button{color:inherit}
 .dialog.panel{background:rgba(14,24,32,.94)}
 .dialog.panel,.dialog.panel *{text-shadow:none}
 .dialog h2{color:#fff}
+
+/* Janelas no mesmo estilo translúcido dos painéis, deixando o mapa visível. */
+#overlay{background:rgba(8,16,24,.26);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+.dialog.panel{background:linear-gradient(125deg,rgba(12,22,30,.74),rgba(18,28,36,.64));backdrop-filter:blur(8px) saturate(1.15);-webkit-backdrop-filter:blur(8px) saturate(1.15)}
+.dialog.panel,.dialog.panel *{text-shadow:0 1px 2px rgba(0,0,0,.55)}
+.dialog .choice{background:rgba(33,58,71,.62)}.dialog .choice:hover:not(:disabled){background:rgba(40,70,86,.75)}
+.procedures li{background:rgba(32,52,63,.55)}
+/* Guia de extintores compacto e centralizado. */
+.dialog.ext-catalog{max-width:620px;max-height:86dvh;padding:18px 20px}
+.ext-catalog h2{font-size:26px;margin:4px 0 6px}
+.ext-catalog .eyebrow{font-size:10px}
+.ext-catalog>div>p{margin:6px 0 10px;font-size:13px}
+.ext-catalog .agent-grid{gap:8px}
+.ext-card{background:rgba(32,52,63,.5);padding:10px 12px;border-radius:8px}
+.ext-card h3{font-size:14.5px;margin:0 0 6px}
+.class-badges{margin-bottom:6px;gap:4px}.class-badges span{font-size:11px;padding:2px 6px}
+.ext-card dl{font-size:12px;line-height:1.3}.ext-card dt{font-size:9.5px;margin-top:5px}.ext-card dd{margin-top:1px}
+.ext-card .agent-choice{margin-top:8px;padding:8px;font-size:12.5px}
+.ext-footnote{font-size:11px!important;margin:8px 0 0!important}
+.dialog .catalog-close{padding:6px 10px;font-size:12px}
+.ext-catalog #resume,.ext-catalog #restart{display:none}
+.dialog.panel{position:relative}
+.ext-catalog .catalog-close{position:absolute;top:14px;right:16px;float:none;margin:0}
+.ext-card dt:first-of-type,.ext-card dd:first-of-type{display:none}
+.ext-card dt:nth-of-type(2){margin-top:0}

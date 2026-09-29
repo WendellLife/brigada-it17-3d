@@ -34,7 +34,7 @@ Investigar a fumaça → alarme → 193 → vítima → classificar → extintor
 |---|---|---|
 | Ana | Operação (setor sinistrado) | Sai assim que o alarme toca |
 | Carla | Qualidade | Vítima: tosse perto da fumaça até ser retirada |
-| Eva | Planejamento (cadeirante) | Aguarda auxílio, acompanha o brigadista até a saída de emergência e segue sozinha ao ponto de encontro |
+| Eva | Planejamento (cadeirante) | Aguarda orientação do brigadista e, depois dela, segue sozinha pela rota até o ponto de encontro |
 | Fábio | Recepção | Liga para o 193 e sai na ordem de abandono |
 | Diego | Manutenção | Aguarda orientação e sai na ordem de abandono |
 | Bruno | Logística | Tenta usar o elevador até ser orientado |
