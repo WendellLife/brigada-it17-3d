@@ -7,7 +7,7 @@ try{renderer=new T.WebGLRenderer({antialias:true,powerPreference:'high-performan
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.22;$('game').appendChild(renderer.domElement);$('loading').remove();
 const scene=new T.Scene();scene.background=new T.Color('#75868f');scene.fog=new T.Fog('#75868f',42,80);
 // Third-person camera at 45°, just behind and above the brigade member.
-const camera=new T.PerspectiveCamera(52,innerWidth/innerHeight,.1,200);const look=new T.Vector3(-2.5,0,-1);const camOffset=new T.Vector3(0,8.2,8.2);let camDist=1;
+const camera=new T.PerspectiveCamera(52,innerWidth/innerHeight,.1,200);const look=new T.Vector3(-2.5,0,-1);const camOffset=new T.Vector3(0,10.8,10.8);let camDist=1;
 scene.add(new T.HemisphereLight(0xcce7ff,0x635139,2.1));const sun=new T.DirectionalLight(0xffe0ad,3.5);sun.position.set(-9,20,5);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-22,right:22,top:20,bottom:-20,near:1,far:65});sun.shadow.bias=-.0003;sun.shadow.normalBias=.035;scene.add(sun);const fill=new T.DirectionalLight(0xb7dcff,1.4);fill.position.set(10,7,-4);scene.add(fill);
 const mats={};function mat(c,metal=0,rough=.7){const key=c+'-'+metal+'-'+rough;return mats[key]??=new T.MeshStandardMaterial({color:c,metalness:metal,roughness:rough});}
 function box(w,h,d,c,x,y,z,parent=scene,metal=0){const m=new T.Mesh(new T.BoxGeometry(w,h,d),typeof c==='object'?c:mat(c,metal));m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;}
