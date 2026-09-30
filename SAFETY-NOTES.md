@@ -27,4 +27,4 @@ Decisões a validar com o plano de emergência da empresa:
 
 A simulação não certifica competência nem substitui o treinamento prático previsto na IT 17.
 
-Modelo dos personagens: `Xbot.glb`, personagem Mixamo (Adobe) incluído nos exemplos oficiais do Three.js, usado conforme a licença do Mixamo para conteúdo de aplicações. Animações idle, walk e run do mesmo arquivo.
+Modelos dos personagens, todos distribuídos com os exemplos oficiais do Three.js: `Xbot.glb` (Mixamo, só as animações idle/walk/run são usadas), `worker-f.glb` ("Michelle", Mixamo/Adobe) e `worker-m.glb` (avatar Ready Player Me). Uso conforme as licenças do Mixamo e do Ready Player Me para conteúdo de aplicações.

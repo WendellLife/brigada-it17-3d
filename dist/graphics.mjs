@@ -14,11 +14,23 @@ export const QUALITY = {
  media:{label:'Média',pixelRatio:1.5,shadows:true,shadowSize:1024,bloom:true,ao:false,soft:false},
  alta:{label:'Alta',pixelRatio:2,shadows:true,shadowSize:2048,bloom:true,ao:false,soft:true}
 };
-export function defaultQuality(){
- try{const saved=localStorage.getItem('brigada-qualidade');if(QUALITY[saved])return saved;}catch{}
- const coarse=matchMedia('(pointer:coarse)').matches||innerWidth<850;
- return coarse?'baixa':'media';
+// Hardware profile: GPU name, cores, memory, screen and input type give a starting level;
+// the runtime FPS monitor in the game then moves it up or down while the setting is "Auto".
+export function detectHardware(renderer){
+ const gl=renderer.getContext();let gpu='';try{const ext=gl.getExtension('WEBGL_debug_renderer_info');gpu=ext?String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)):'';}catch{}
+ const mobile=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)||(matchMedia('(pointer:coarse)').matches&&innerWidth<1100);
+ const cores=navigator.hardwareConcurrency||4,mem=navigator.deviceMemory||4,pixels=innerWidth*innerHeight*Math.min(devicePixelRatio,3);
+ const g=gpu.toLowerCase();let score=2;
+ if(/swiftshader|llvmpipe|software|basic render/.test(g))score=0;
+ else if(/nvidia|geforce|rtx|gtx|radeon rx|radeon pro|arc a|apple m\d/.test(g))score=3;
+ else if(/intel.*(iris|uhd 7|arc)|apple gpu|adreno 7|mali-g7\d\d|mali-g8|immortalis/.test(g))score=2;
+ else if(/intel|adreno 6|mali-g5|mali-g6|mali-t|powervr|videocore/.test(g))score=1;
+ if(mobile)score=Math.min(score,2);if(cores<=2||mem<=2)score=Math.min(score,1);if(pixels>4.5e6&&score>2)score=2;
+ const level=score>=3?'alta':score===2?'media':'baixa';
+ return {gpu,mobile,cores,mem,score,level};
 }
+export function savedQuality(){try{const saved=localStorage.getItem('brigada-qualidade');if(saved==='auto'||QUALITY[saved])return saved;}catch{}return 'auto';}
+export function defaultQuality(){return 'media';}
 export function createRenderPipeline(renderer,scene,camera,sun){
  const pmrem=new T.PMREMGenerator(renderer);scene.environment=pmrem.fromScene(new RoomEnvironment(),.04).texture;scene.environmentIntensity=.3;
  let composer=null,bloom=null,ao=null,level=null;
@@ -33,12 +45,12 @@ export function createRenderPipeline(renderer,scene,camera,sun){
   composer=new EffectComposer(renderer,new T.WebGLRenderTarget(innerWidth,innerHeight,{type:T.HalfFloatType,samples:q.level==='alta'?4:2}));composer.setPixelRatio(Math.min(devicePixelRatio,q.pixelRatio));composer.setSize(innerWidth,innerHeight);
   composer.addPass(new RenderPass(scene,camera));
   if(q.ao){ao=new GTAOPass(scene,camera,innerWidth,innerHeight);ao.output=GTAOPass.OUTPUT.Default;ao.blendIntensity=.85;ao.updateGtaoMaterial({radius:.45,distanceExponent:1.4,thickness:1.2,scale:1,samples:12});ao.updatePdMaterial({lumaPhi:10,depthPhi:2,normalPhi:3,radius:6,rings:2,samples:12});composer.addPass(ao);}
-  if(q.bloom){bloom=new UnrealBloomPass(new T.Vector2(innerWidth,innerHeight),.28,.3,1.45);composer.addPass(bloom);}
+  if(q.bloom){bloom=new UnrealBloomPass(new T.Vector2(innerWidth,innerHeight),.16,.25,1.6);composer.addPass(bloom);}
   composer.addPass(new OutputPass());
  }
  const api={
   get level(){return level;},
-  setLevel(l){if(!QUALITY[l]||l===level)return;level=l;try{localStorage.setItem('brigada-qualidade',l);}catch{}build();},
+  setLevel(l,persist=true){if(!QUALITY[l]||l===level)return;level=l;if(persist){try{localStorage.setItem('brigada-qualidade',l);}catch{}}build();},
   resize(){if(composer){composer.setSize(innerWidth,innerHeight);}renderer.setSize(innerWidth,innerHeight);},
   render(){if(composer)composer.render();else renderer.render(scene,camera);}
  };

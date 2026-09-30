@@ -41,16 +41,17 @@ Investigar a fumaça → alarme → 193 → vítima → classificar → extintor
 
 ## Gráficos
 
-- Botão **Gráficos** no topo: Baixa, Média ou Alta. O jogo escolhe Média no computador e Baixa no celular e lembra a escolha. Se o jogo ficar lento, a qualidade baixa sozinha uma vez.
+- Botão **Gráficos** no topo: Auto, Baixa, Média ou Alta. Em **Auto** (padrão), o jogo identifica a placa de vídeo, o número de núcleos, a memória, a tela e se é celular, escolhe o nível inicial e depois acompanha a taxa de quadros: abaixo de 28 fps desce um nível, e no computador sobe um nível quando fica estável acima de 56 fps. No celular a resolução de renderização é limitada para manter a fluidez. A escolha manual é lembrada e desliga o ajuste automático.
 - **Média/Alta:** brilho (bloom) no fogo, giroflex e luminárias, reflexos de ambiente em metais e sombras suaves que acompanham o jogador. **Baixa:** sem pós-processamento e sem sombras, para PCs fracos.
 - Texturas geradas no próprio código (concreto, chapas, papelão, grama, asfalto): o download não aumenta.
 - Fogo com chamas brilhantes e faíscas, fumaça volumosa, jatos de água e CO₂ em partículas.
 - Luminárias no teto, luzes de emergência que acendem com o alarme, porta-paletes e entorno com gramado.
 - Ações com objeto: o extintor fica na mão direita e a descarga tem três tempos (retirar o pino, apontar para a base e varrer de um lado para o outro). Alarme, quadro, central de som e porta têm gestos de alcançar e empurrar; contagem com prancheta; isolamento agachado colocando os cones.
 - Texturas com relevo (mapas de normal gerados no código) no concreto, nas chapas, no papelão e no asfalto.
-- Na qualidade Alta, sombras mais suaves. Feixes de luz das luminárias aparecem na fumaça. Os rolos da esteira giram enquanto há energia. Depois do incêndio ficam marcas de fuligem no piso e na parede.
+- Na qualidade Alta, sombras mais suaves. Os rolos da esteira giram enquanto há energia. Depois do incêndio ficam marcas de fuligem no piso e na parede.
+- Cada pessoa tem tom de pele, barba, capacete, colete, luvas e sapatos próprios, e o nome da área nas costas do colete. O brigadista se destaca com capacete vermelho de faixa branca, colete laranja com "BRIGADA" nas costas, luvas claras e braçadeira. Bombeiros com uniforme escuro, faixas amarelas e "BOMBEIROS" nas costas.
 - Personagens com esqueleto e animações de captura de movimento (parado, andando, correndo), misturadas conforme a velocidade. Ações como segurar o extintor, descarregar, telefonar, tossir, digitar, empurrar, acenar e puxar a mangueira são poses aplicadas sobre a animação. Capacete, colete refletivo e braçadeira são presos aos ossos.
-- O modelo base é `dist/models/Xbot.glb` (personagem Mixamo distribuído com os exemplos do Three.js). Qualquer personagem com esqueleto Mixamo e clipes `idle`, `walk` e `run` pode substituí-lo sem mudar o jogo.
+- Todos os personagens usam o mesmo corpo realista do brigadista (`dist/models/worker-m.glb`, avatar Ready Player Me), com roupa por função: macacão azul (operação), jaleco branco (qualidade), roupa social (planejamento), camisa clara (recepção), macacão cinza (manutenção), uniforme cáqui (logística), uniforme escuro com faixas amarelas (bombeiros). `dist/models/worker-f.glb` ("Michelle", Mixamo) fica disponível como corpo feminino alternativo (`body:'female'`). As animações vêm de `dist/models/Xbot.glb` e são retargetadas para cada corpo por direção dos ossos, então qualquer corpo com esqueleto Mixamo pode ser trocado sem mudar o jogo. Roupas, sapatos e tom de pele são recoloridos por pessoa; barba e boné são opcionais.
 
 ## Arquivos
 
@@ -61,7 +62,7 @@ Investigar a fumaça → alarme → 193 → vítima → classificar → extintor
 - `dist/three.module.js`: Three.js 0.170.0, incluída localmente.
 - `dist/graphics.mjs`: qualidade gráfica, pós-processamento, texturas e partículas.
 - `dist/characters.mjs`: personagens com esqueleto, mistura de animações e poses de ação.
-- `dist/models/Xbot.glb`: modelo base dos personagens (2,9 MB).
+- `dist/models/`: `Xbot.glb` (biblioteca de animações, 2,9 MB), `worker-m.glb` (1,8 MB) e `worker-f.glb` (3,3 MB).
 - `dist/addons/`: módulos oficiais do Three.js 0.170.0 (pós-processamento e ambiente), mesma licença MIT.
 - `*.test.mjs` e `test.mjs`: testes.
 - `IT17-COMPARATIVO.md` e `SAFETY-NOTES.md`: base normativa e decisões didáticas.
